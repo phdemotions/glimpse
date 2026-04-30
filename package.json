@@ -1,0 +1,51 @@
+{
+  "name": "glimpse",
+  "description": "Make data speak. Locally. A static, offline-first browser tool that turns raw data into clear, shareable infographics. By Opus Vita.",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "license": "UNLICENSED",
+  "homepage": "https://phdemotions.github.io/glimpse",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phdemotions/glimpse.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "1.33.1-dev45.0",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/source-serif-4": "^5.2.9",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "vega-embed": "^7.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.2",
+    "vite": "^8.0.10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
