@@ -18,11 +18,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "1.33.1-dev45.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/source-serif-4": "^5.2.9",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "vega-embed": "^7.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

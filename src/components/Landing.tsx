@@ -1,16 +1,32 @@
 import { Button } from './ui/Button'
 import { Eyebrow } from './ui/Eyebrow'
 import { Wordmark } from './ui/Wordmark'
-import { UploadDropzone } from './UploadDropzone'
+import { UploadDropzone, type UploadError } from './UploadDropzone'
 import { MobileSoftBlock } from './MobileSoftBlock'
 
 const SAMPLES = [
-  { id: 'survey', label: 'Survey responses' },
-  { id: 'revenue', label: 'Monthly revenue' },
-  { id: 'rankings', label: 'Country rankings' },
+  { id: 'survey-responses', label: 'Survey responses' },
+  { id: 'monthly-revenue', label: 'Monthly revenue' },
+  { id: 'country-rankings', label: 'Country rankings' },
 ] as const
 
-export function Landing() {
+export type SampleId = (typeof SAMPLES)[number]['id']
+
+type LandingProps = {
+  loading?: boolean
+  error?: string | null
+  onFileSelected: (file: File) => void
+  onSampleSelected: (id: SampleId) => void
+  onUploadValidationError?: (err: UploadError) => void
+}
+
+export function Landing({
+  loading = false,
+  error = null,
+  onFileSelected,
+  onSampleSelected,
+  onUploadValidationError,
+}: LandingProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -18,7 +34,7 @@ export function Landing() {
         <div className="max-w-content mx-auto flex items-center justify-between">
           <Wordmark />
           <a
-            href="#about"
+            href="https://github.com/phdemotions/glimpse"
             className="hidden sm:inline-block font-sans text-sm text-ink-700 hover:text-sage-700 transition-colors duration-fast"
           >
             about
@@ -40,9 +56,18 @@ export function Landing() {
             </p>
           </div>
 
-          {/* Upload affordance — desktop only */}
+          {/* Upload affordance / states — desktop only */}
           <div className="mt-16 hidden md:block">
-            <UploadDropzone />
+            {error ? (
+              <ErrorPanel message={error} />
+            ) : loading ? (
+              <LoadingPanel />
+            ) : (
+              <UploadDropzone
+                onFileSelected={onFileSelected}
+                onError={onUploadValidationError}
+              />
+            )}
           </div>
 
           {/* Sample picker — desktop only */}
@@ -50,7 +75,13 @@ export function Landing() {
             <Eyebrow>or try a sample</Eyebrow>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               {SAMPLES.map((s) => (
-                <Button key={s.id}>{s.label}</Button>
+                <Button
+                  key={s.id}
+                  onClick={() => onSampleSelected(s.id)}
+                  disabled={loading}
+                >
+                  {s.label}
+                </Button>
               ))}
             </div>
           </div>
@@ -105,6 +136,33 @@ export function Landing() {
           </p>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function LoadingPanel() {
+  return (
+    <div className="rounded-md border border-dashed border-ink-200 bg-stone-50 px-6 py-16 text-center">
+      <p className="font-serif text-lg text-ink-800">Reading your file…</p>
+      <p className="mt-2 font-sans text-sm text-sage-700">
+        Loading data engine if needed
+      </p>
+    </div>
+  )
+}
+
+function ErrorPanel({ message }: { message: string }) {
+  return (
+    <div className="rounded-md border border-ink-200 bg-white px-6 py-12">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <p className="font-serif text-lg text-ink-800">
+          That didn&rsquo;t work
+        </p>
+        <p className="font-sans text-sm text-ink-600 max-w-md">{message}</p>
+        <p className="mt-2 font-sans text-sm text-sage-700">
+          Drop another file or pick a sample to try again.
+        </p>
+      </div>
     </div>
   )
 }
