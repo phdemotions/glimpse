@@ -2,9 +2,9 @@
 
 ## Current state
 
-- **Phase:** Pre-CP-1 — scaffold complete, no code yet
-- **Last session:** 2026-04-30 — planning + doc scaffold + 5-persona doc-review + scope-tightening revision
-- **Next action:** Visual approval is captured (landing v2 mockup, 2026-04-30). Begin CP-1 implementation. Plan: [`docs/plans/2026-04-30-001-feat-glimpse-v1-plan.md`](docs/plans/2026-04-30-001-feat-glimpse-v1-plan.md)
+- **Phase:** CP-1 — Foundation **shipping** on `feat/cp-1-foundation`
+- **Last session:** 2026-04-30 — CP-1 implementation end-to-end
+- **Next action:** Push `feat/cp-1-foundation`, open PR against `main`, review, merge. Then begin CP-2 (Quick mode — type detection, opinionated default chart selection)
 
 ## Session log
 
@@ -41,6 +41,69 @@
 - **Coherence cleanups landed:** view-source as canonical label (not "pedagogy mode"), Mosaic absent from CP-1, Parquet noted deferred, font filenames + license URLs locked, mobile breakpoint phrasing harmonized
 
 **Final plan shape:** 33 locked decisions, 5 CPs (Foundation → Quick mode → Infographic+View-source → Persistence+Offline → Polish+Deploy), tabular-only v1, no PDF, no AI, no analytics, no Mosaic, no Plot.
+
+### 2026-04-30 — CP-1 Foundation implementation (feat/cp-1-foundation)
+
+Shipped end-to-end CP-1 spine. From a cold landing, a user can drop a CSV/JSON or click a sample and see a brand-styled bar chart in <1s after warm-up.
+
+**Scaffold + design system**
+- Vite 8 + React 19 + TypeScript 6 + Tailwind 3 + postcss + autoprefixer
+- Vite `base: '/glimpse/'` for GitHub Pages subpath
+- pnpm `onlyBuiltDependencies` for esbuild (pnpm 10+ trap)
+- Self-hosted variable fonts via `@fontsource-variable` (Source Serif 4 opsz, Inter opsz, JetBrains Mono wght) — bundled into dist, no Google Fonts CDN
+- `src/styles/tokens.ts` mirrors `opusvita-org/lib/design/tokens.js` (Ink/Sage/Stone palette + ramps, typography, animation, layout, radius)
+- `tailwind.config.ts` extends with tokens via `satisfies Config`
+- Updated VISUAL-IDENTITY.md to lock @fontsource-variable pattern (privacy-equivalent to manual public/fonts/, simpler version mgmt)
+
+**Landing v2 (visual approval captured)**
+- Wordmark header (`Glimpse.` with sage period) + about link, hairline rule
+- Headline 'Show, don't tell.' (text-5xl on md+, text-4xl on mobile)
+- Sub line in serif lg
+- UploadDropzone — drag-drop + click-to-pick + 50MB size guard + extension guard (.csv/.json), drag-over state (sage-500 border + sage-50/60 bg)
+- Sample picker (3 secondary buttons) wired to ingest pipeline
+- Privacy line in sans 14px ink-500
+- Footer: 'an opus vita tool' eyebrow + Claritas/Arbiter/opusvita.org/github links
+
+**Mobile soft-block (PLAN.md Decision #26)**
+- <768px viewport replaces upload affordance with 'Glimpse works best on desktop' panel + Copy URL button; headline + footer remain visible
+
+**Data pipeline (src/data/)**
+- `duckdb.ts`: AsyncDuckDB singleton with `requestIdleCallback` prefetch after landing paint — resolves the cold-load risk surfaced in 2026-04-30 doc-review
+- `ingest.ts`: BROWSER_FILEREADER + read_csv_auto / read_json_auto into a 'glimpse' table
+- `schema.ts`: DESCRIBE + per-column null/cardinality stats + 10-row sample; classifies DuckDB types into numeric/string/date/boolean
+
+**Charts (src/charts/)**
+- `vega.ts`: brand-styled Vega config (Source Serif title, Inter axis labels, sage-700 bar fill, ink-200 grid) + `makeBarSpec` helper. Vega-Lite is the single renderer per Decision #6
+- BigInt → Number coercion in ChartView so DuckDB integer columns flow into Vega without runtime errors
+
+**Components**
+- ChartView: X (categorical/date) + Y (numeric) pickers, vega-embed SVG output with empty state
+- SchemaView: filename eyebrow + row/column count headline + chart + schema table + first-N rows
+- Landing: state-aware (idle/loading/error) with inline panels replacing the dropzone
+- App: state machine (idle → loading → ready → reset) with prefetchDuckDB on mount
+
+**Sample data (public/samples/)**
+- survey-responses.csv (categorical × numeric)
+- monthly-revenue.csv (date × numeric)
+- country-rankings.csv (categorical × numeric)
+
+**Plan adjustments**
+- Excel deferred to CP-2 per CP-1 risk note (UploadDropzone narrowed to .csv/.json)
+- CP-1 plan task #2 reflects @fontsource-variable pattern
+
+**Verification (preview server, viewport 1280×900 + mobile 375×812)**
+- All 3 samples ingest in <1s after warm-up
+- Bar chart renders with sage-700 bars, Source Serif titles, Inter axis labels, ink-200 hairline grid
+- 'drop another file' resets to landing
+- Mobile soft-block hides upload + samples; preserves headline, privacy line, footer
+- Console clean across all 3 sample loads
+- Manual size/type error testing deferred to README run-locally instructions
+
+**Commits on `feat/cp-1-foundation`**
+1. `8db58d4` feat: scaffold Vite + React + Tailwind, ship Landing v2
+2. `e2ddd26` feat: data pipeline + SchemaView + ChartView + sample CSVs
+
+Branch ready to push + PR.
 
 ## Health
 
