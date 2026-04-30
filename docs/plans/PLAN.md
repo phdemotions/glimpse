@@ -2,8 +2,8 @@
 
 > Durable product plan. Locked decisions, open questions, risks, working agreements. Index for individual CP plan files.
 
-**Last updated:** 2026-04-30 (post-doc-review revision — scope tightened, 33 locked decisions, 5 CPs)
-**Status:** Pre-CP-1 — scaffold complete, no code yet
+**Last updated:** 2026-04-30 (post-CP-1 ship + CP-2 plan revision — 35 locked decisions, 5 CPs)
+**Status:** CP-1 in PR; CP-2 plan active — view-source pulled forward into CP-2 per doc-review
 
 ---
 
@@ -63,10 +63,12 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 | 27 | **Light-mode only v1** | Defer dark mode to post-v1. Doubles design QA. Shared infographics export light-themed by default for universal display compatibility. Family-wide dark-mode sync revisited later |
 | 28 | **No analytics in v1** | Resolves the TECHNICAL-ARCHITECTURE ambiguity ("Plausible-style page-view counter or none in v1"). v1 = none. Even page-view counters can leak referrer + UA fingerprints. If maintainer signal becomes critical, revisit with explicit decision row + privacy-policy update |
 | 29 | **Lead audience v1: students.** Industry communicator demoted to "also works for" | Doc-review (Adversarial + Product Lens) surfaced dual-audience as the premise most likely to crack. Single audience drives v1 roadmap; second audience benefits from same surface but does not get features carved for them |
-| 30 | **The wedge is pedagogy, not local-first** | ChatGPT code interpreter already covers Quick-mode at 80% quality. The durable differentiator is view-source + plain-English-why, which LLMs do not naturally ship. Re-sequence: pedagogy moves into CP-3 alongside infographic templates, not its own later phase |
+| 30 | **The wedge is pedagogy, ships with Quick mode in CP-2** | ChatGPT code interpreter already covers Quick-mode at 80% quality. The durable differentiator is view-source + plain-English-why, which LLMs do not naturally ship. **View-source ships in CP-2 alongside Quick mode and ships again in CP-3 alongside templates — same component, both modes consume it.** Revised after CP-2 doc-review (2026-04-30) flagged that Quick mode without view-source = "ChatGPT clone with a footnote" and the wedge should never ship later than the surface it differentiates |
 | 31 | **PDF parsing deferred to Glimpse-PDF (v1.1, separate product)** | Custom row/col clusterer is months of engineering; quality bar against academic PDFs is unfalsifiable without a locked corpus; cuts ~6 weeks from v1 timeline. Glimpse v1 ships tabular only. Decisions #8, #15, #25 (and old CP-4) all defer with this |
 | 32 | **Scope-revisit trigger: 8 weeks from CP-1 start** | If v1 has not shipped 8 weeks after CP-1 begins, pause and re-evaluate against opportunity cost on Marginalia / Arbiter / Claritas. Trigger, not kill — outcome may be re-scope, re-sequence, or continue |
 | 33 | **Glimpse positioned as funnel into Opus Vita research suite** | Resolves the brand-coherence concern (Product Lens). Glimpse is "free data tool by the team behind Claritas and Arbiter." Earns research-product brand equity by serving the audience upstream. Marketing copy and footer link reflect this |
+| 34 | **Date-format detection: ISO 8601 high confidence, US `M/D/YYYY` medium, else string** | New CP-2 sub-decision (was incorrectly cited as PLAN.md #5 in early CP-2 plan draft — corrected). ISO is unambiguous. US format is acknowledged because target audience writes US-formatted dates; medium confidence triggers user confirmation via override UI before committing to a line chart. Other locale-specific formats (D/M/YYYY, written month names) defer to evidence from real user files |
+| 35 | **3-tier confidence enum (`high` / `medium` / `low`) operationalizes Decision #24** | Decision #24 said "low-confidence flagging + override UI." CP-2 implements that via 3 discrete tiers, mapping cleanly to UI affordances: high = no badge, medium = subtle hint, low = inline override prompt. Discrete tiers avoid false numeric precision and stay defensible without analytics signal (Decision #28) |
 
 ---
 
@@ -75,8 +77,8 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 | CP | Title | Plan file | Status |
 |----|-------|-----------|--------|
 | CP-1 | **Foundation** — scaffold, layout, upload, DuckDB wired, sample CSV → first chart via Vega-Lite | [`2026-04-30-001-feat-glimpse-v1-plan.md`](2026-04-30-001-feat-glimpse-v1-plan.md) | Pending |
-| CP-2 | **Quick mode** — type detection, opinionated default Vega-Lite specs, plain-English captions, override UI | TBD | — |
-| CP-3 | **Infographic mode + view-source pedagogy (the moat)** — 8 templates as parametrized Vega-Lite specs, view-source toggle exposing spec JSON + plain-English why, SVG/PNG/JSON export | TBD | — |
+| CP-2 | **Quick mode + view-source (the moat lands early)** — type detection, opinionated default Vega-Lite specs, plain-English captions, override UI, **view-source toggle exposing spec JSON + plain-English why** | [`2026-04-30-002-feat-quick-mode-cp-2-plan.md`](2026-04-30-002-feat-quick-mode-cp-2-plan.md) | Active |
+| CP-3 | **Infographic mode** — 8 templates as parametrized Vega-Lite specs, brand fills, social-share export (SVG/PNG/spec JSON). View-source component shipped in CP-2 is reused for templates | TBD | — |
 | CP-4 | **Persistence + offline** — Dexie sessions, service worker, install prompt | TBD | — |
 | CP-5 | **Polish + GitHub Pages deploy** | TBD | — |
 

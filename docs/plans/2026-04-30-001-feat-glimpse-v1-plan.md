@@ -176,5 +176,5 @@ glimpse/
 
 - DuckDB query layer abstracted enough to be called from CP-2's auto-chart logic
 - Chart render layer accepts a "chart spec" object so CP-2 can swap bar→line→scatter without rewiring
-- Type-detection helpers in `src/data/schema.ts` returning `{ column, type, cardinality, nullCount }` per column
+- Type-detection helpers in `src/data/schema.ts` returning `{ name, duckdbType, type, cardinality, nullCount }` per column (CP-2 extends with `subtype` and `confidence`)
 - Empty/error states reusable across modes
