@@ -27,14 +27,14 @@ A first-time visitor lands on Glimpse, drops a CSV, and sees a useful, well-styl
 ### Must ship
 
 1. **Repo scaffold** — Vite + React + TypeScript + Tailwind 3, design tokens (Ink/Sage/Stone), Source Serif 4 + Inter + JetBrains Mono fonts self-hosted
-2. **Landing surface** — eyebrow + headline + sub + dropzone + sample-data picker
+2. **Landing surface** — wordmark header + headline + sub + dropzone + sample-data picker; "an opus vita tool" eyebrow + opusvita.org/github links live in **footer** (per Landing v2 mockup approved 2026-04-30)
 3. **File upload** — drag-and-drop and click-to-pick, accept `.csv`, `.xlsx`, `.json`, file-size guard (50MB v1)
 4. **DuckDB-WASM init** — lazy-loaded on first upload, ~3–5MB cost amortized after first chart, progress indicator
 5. **Schema preview** — table sample (first 10 rows), inferred column types
 6. **One chart end-to-end** — pick X column, pick Y column, render a brand-styled bar chart via **Vega-Lite** (single renderer for both modes per Decision #6)
 7. **Sample-data picker** — 3 curated CSVs (survey responses, monthly revenue, country rankings)
 8. **DuckDB-WASM idle prefetch** — kick off WASM fetch from `requestIdleCallback` after landing paint, not on first click. Mitigates the cold-load risk surfaced in 2026-04-30 doc-review (5MB on 3–10 Mbps dorm wifi = 4–13s)
-8. **Empty-state copy** — sells the feeling first ("Drop a spreadsheet. We'll handle the rest.")
+9. **Empty-state copy** — sells the feeling first ("Drop a spreadsheet. We'll handle the rest.")
 
 ### Could ship (stretch)
 
@@ -125,7 +125,7 @@ glimpse/
 2. **Self-host fonts** — Source Serif 4, Inter, JetBrains Mono in `public/fonts/`, declared in `globals.css` (no Google Fonts CDN)
 3. **Build design tokens** — `src/styles/tokens.ts` mirroring `opusvita-org/lib/design/tokens.js` (palette, typography, animation, layout, radius)
 4. **Wire Tailwind config** — extend with tokens; match family conventions
-5. **Build `<Landing>`** — eyebrow ("an opus vita tool"), headline ("Make data speak. Locally."), sub, dropzone CTA, sample-data picker. **Visual approval first.**
+5. **Build `<Landing>`** per **Landing v2 mockup** (approved 2026-04-30) — wordmark header ("Glimpse." with sage period) + about link, hairline rule, headline **"Show, don't tell."**, sub ("Drop a spreadsheet or paste a paper. Get a chart worth sharing."), dropzone, sample-data picker, privacy line, hairline rule, footer eyebrow ("an opus vita tool") + opusvita.org · github links
 6. **Build `<UploadDropzone>`** — drag-and-drop, click-to-pick, accept rules, file-size guard
 7. **Wire DuckDB-WASM** — install `@duckdb/duckdb-wasm`, **prefetch via `requestIdleCallback` after landing paint**, then warm-init on first upload. Show progress only if click arrives before idle prefetch completes
 8. **Build `<SchemaView>`** — table name, columns, types, first 10 rows
@@ -142,7 +142,7 @@ glimpse/
 ## Definition of done
 
 - Cold load to interactive: <2s on a wired connection (LCP target <1.5s)
-- DuckDB-WASM loads only after first user action (upload click), not on initial paint
+- DuckDB-WASM does not block initial paint — idle-prefetched after landing paint via `requestIdleCallback` so click-time experience is warm on broadband
 - Drop a CSV → schema preview within 1s of file read complete
 - Pick X and Y → chart renders within 200ms (excluding initial DuckDB load)
 - Visual identity matches the Arbiter family in screenshot side-by-side review
@@ -153,16 +153,16 @@ glimpse/
 
 | Risk | Mitigation |
 |------|------------|
-| **DuckDB-WASM bundle size on cold load** | Lazy-load on first upload click, show progress |
+| **DuckDB-WASM bundle size on cold load** | **Idle-prefetch via `requestIdleCallback` after landing paint** (per task #8). Show progress only if click arrives before idle fetch completes |
 | **Excel parsing edge cases in DuckDB-WASM** | If we hit a wall, defer Excel to CP-2 and ship CSV+JSON only |
 | **Tailwind v3 vs v4 ambiguity** | Stay v3 — match family. Migrate when family migrates |
-| **Plot SVG rendering inside React** | Use `useEffect` to mount the Plot result; don't try to make Plot a React component |
+| **Vega-Lite SVG rendering inside React** | Use `useEffect` to mount via `vega-embed`; don't try to make the chart a React component |
 
 ## Verification (manual)
 
 | # | Step | Expected |
 |---|------|----------|
-| 1 | Open dev server, view landing | Hero renders; eyebrow in italic sage; dropzone visible; sample picker visible |
+| 1 | Open dev server, view landing | Wordmark header + hairline rule; "Show, don't tell." headline lands directly (no eyebrow above); dropzone visible; sample picker visible; footer eyebrow + opusvita.org/github links visible at bottom |
 | 2 | Click sample "survey-responses.csv" | Schema preview shows columns + first 10 rows in <1s |
 | 3 | Pick `question` (X) and `count` (Y) | Bar chart renders; brand colors; Source Serif title |
 | 4 | Drop `monthly-revenue.csv` from disk | Replaces previous data; schema updates; default chart renders |
