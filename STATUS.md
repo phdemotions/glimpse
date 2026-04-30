@@ -2,9 +2,9 @@
 
 ## Current state
 
-- **Phase:** CP-1 — Foundation **shipping** on `feat/cp-1-foundation`
-- **Last session:** 2026-04-30 — CP-1 implementation end-to-end
-- **Next action:** Push `feat/cp-1-foundation`, open PR against `main`, review, merge. Then begin CP-2 (Quick mode — type detection, opinionated default chart selection)
+- **Phase:** CP-2 — Quick mode + view-source **shipping** on `feat/cp-2-quick-mode` (worktree at `~/developer/glimpse-cp2/`)
+- **Last session:** 2026-04-30 — CP-2 implementation end-to-end (8 units, 85 tests, all passing)
+- **Next action:** Push `feat/cp-2-quick-mode`, open PR against `main`, review, merge. Then begin CP-3 (Infographic mode — 8 templates reusing the view-source component)
 
 ## Session log
 
@@ -104,6 +104,53 @@ Shipped end-to-end CP-1 spine. From a cold landing, a user can drop a CSV/JSON o
 2. `e2ddd26` feat: data pipeline + SchemaView + ChartView + sample CSVs
 
 Branch ready to push + PR.
+
+### 2026-04-30 — CP-2 Quick mode + view-source implementation (feat/cp-2-quick-mode)
+
+Worktree at `~/developer/glimpse-cp2/`. 8 implementation units shipped end-to-end. From the same upload flow as CP-1, the user now lands on a schema view with an auto-selected chart, plain-English caption, type-override per column, and a view-source toggle exposing the Vega-Lite spec.
+
+**Test infra (new in CP-2)**
+- vitest 4 + jsdom + @testing-library/react
+- 85 tests across 9 files, all passing
+- `pnpm test` / `pnpm test:watch` scripts
+
+**Data layer (`src/data/`)**
+- `coerce.ts` — central BigInt → Number + Date → ISO coercion (replaces inline ChartView coerce)
+- `sample-rows.ts` — single batched DuckDB query with client-side transpose (avoids per-column round trips on wide datasets)
+- `type-detect.ts` — date (ISO incl. YYYY-MM, US M/D/YYYY), Likert with N/A sentinel filter + cardinality fallback, geographic with conservative confidence
+- `schema.ts` — `ColumnInfo` extended with `subtype` (`ordinal`/`likert`/`geographic`) and 3-tier `confidence`
+
+**Charts layer (`src/charts/`)**
+- `selector.ts` — pure function: `selectChart(columns, overrides) → ChartChoice`. Decision tree picks bar / line / scatter / histogram / pie / ranking / none. Line guard: ≥3 distinct dates required
+- `vega.ts` — 5 new spec builders: line (temporal/nominal axis), scatter, histogram (consumes pre-binned rows), pie, ranking (explicit window sort by yField)
+- `binning.ts` — DuckDB pre-bin helper using FLOOR/COUNT GROUP BY, Sturges' formula for bin count
+- `captions.ts` — template-based plain-English captions per chart kind, locked tone benchmark, ≤200 chars per body
+
+**Components**
+- `ConfidenceBadge.tsx` — silent for high, italic sage hint for medium, ink-200 pill warning for low
+- `TypeOverrideDropdown.tsx` — native `<select>` with friendly labels (text/numeric/date/true-false)
+- `ViewSource.tsx` — `<details>` disclosure with two-column "why this chart" + spec JSON; copy spec button
+- `SchemaView.tsx` — caption above chart, 20-col disclosure for wide schemas, type override per row, view-source under chart
+- `ChartView.tsx` — dispatches on `ChartChoice.kind`, runs DuckDB pre-bin for histogram, reports built spec back to parent for view-source mirror, falls back to manual picker on `kind: 'none'`
+- `App.tsx` — `columnTypeOverrides` state lifted to top-level; `useMemo(() => selectChart(...))` for stable identity; `reset()` clears overrides
+
+**Plan adjustments during implementation**
+- `PIE_MAX = 5` (was 6 in plan decision sketch) — reconciled internal plan contradiction; cardinality 6 = bar matches plan unit-test scenarios + better legibility
+- ISO date regex extended to allow `YYYY-MM` (ISO 8601 reduced-precision) — `monthly-revenue.csv` uses `2025-01` style which wouldn't match the strict `YYYY-MM-DD` regex
+
+**Verification (preview server, viewport 1280×900 + mobile 375×812)**
+- `survey-responses` (6 roles × 1 numeric) → **bar chart** ✓
+- `monthly-revenue` (12 months × 2 numerics) → **line chart** with temporal axis ✓
+- `country-rankings` (10 countries × 2 numerics) → **bar chart** (cardinality 10 ≤ 12) ✓
+- View-source disclosure exposes the live spec JSON + reasoning + caption ✓
+- Override `respondents` numeric → text → caption updates to use `confidence_score` ✓
+- Reset clears overrides — re-loading sample shows original auto-pick ✓
+- Mobile <768px shows soft-block, headline + privacy + footer remain ✓
+
+**Commits planned on `feat/cp-2-quick-mode`** (about to land):
+1. CP-2 Quick mode + view-source implementation
+
+Branch ready to push + PR after this commit.
 
 ## Health
 
