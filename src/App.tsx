@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Landing, type SampleId } from './components/Landing'
 import { SchemaView } from './components/SchemaView'
 import { ingestFile } from './data/ingest'
 import { prefetchDuckDB } from './data/duckdb'
-import { getSchema, type Schema } from './data/schema'
+import {
+  getSchema,
+  type ColumnType,
+  type Schema,
+} from './data/schema'
 import type { UploadError } from './components/UploadDropzone'
+import { selectChart } from './charts/selector'
+import { captionFor } from './charts/captions'
 
 type AppState =
   | { kind: 'idle' }
@@ -22,6 +28,7 @@ function describeUploadError(err: UploadError): string {
 
 export default function App() {
   const [state, setState] = useState<AppState>({ kind: 'idle' })
+  const [overrides, setOverrides] = useState<Record<string, ColumnType>>({})
 
   // Idle-prefetch DuckDB-WASM after first paint so the user's first click
   // finds the engine warm. Mitigates the 5MB cold-load risk on slow networks.
@@ -29,12 +36,26 @@ export default function App() {
     prefetchDuckDB()
   }, [])
 
+  const schemaColumns =
+    state.kind === 'ready' ? state.schema.columns : null
+
+  const choice = useMemo(
+    () => (schemaColumns ? selectChart(schemaColumns, overrides) : null),
+    [schemaColumns, overrides],
+  )
+
+  const caption = useMemo(
+    () => (choice ? captionFor(choice) : null),
+    [choice],
+  )
+
   async function loadFile(file: File) {
     setState({ kind: 'loading' })
     try {
       const result = await ingestFile(file)
       const schema = await getSchema(result.tableName)
       setState({ kind: 'ready', schema, fileName: result.fileName })
+      setOverrides({})
     } catch (err) {
       setState({
         kind: 'error',
@@ -62,13 +83,22 @@ export default function App() {
 
   function reset() {
     setState({ kind: 'idle' })
+    setOverrides({})
   }
 
-  if (state.kind === 'ready') {
+  function handleTypeOverride(name: string, type: ColumnType) {
+    setOverrides((prev) => ({ ...prev, [name]: type }))
+  }
+
+  if (state.kind === 'ready' && choice && caption) {
     return (
       <SchemaView
         schema={state.schema}
         fileName={state.fileName}
+        choice={choice}
+        caption={caption}
+        overrides={overrides}
+        onTypeOverride={handleTypeOverride}
         onReset={reset}
       />
     )

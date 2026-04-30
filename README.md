@@ -8,9 +8,9 @@ A static, offline-first browser tool that turns raw data files into clear, share
 
 ## What it does
 
-- **Quick mode** *(in progress, CP-2)* — drop a CSV, see opinionated charts auto-chosen from the data shape
+- **Quick mode** — drop a CSV, get an opinionated chart auto-chosen from the data shape: bar / line / scatter / histogram / pie / top-N ranking. Plain-English caption explains the choice. Override any column's inferred type if the auto-pick is wrong
+- **View-source** — toggle reveals the Vega-Lite spec JSON + the reasoning behind the chart selection. The pedagogy that ChatGPT code interpreter doesn't ship
 - **Infographic mode** *(CP-3)* — generate shareable, social-ready visuals from 8 hand-crafted templates
-- **View-source** *(CP-3)* — see the Vega-Lite spec for any chart, plus a plain-English explanation of why this chart shape
 
 PDF parsing is moved to **Glimpse-PDF**, a separate v1.1 product.
 
@@ -40,10 +40,13 @@ What to try:
 
 | Action | Expected |
 |--------|----------|
-| Click **Survey responses** | Schema preview + bar chart in <1 s |
-| Click **Monthly revenue** or **Country rankings** | Replaces previous dataset |
-| Click **← drop another file** | Returns to landing |
-| Drop a `.txt` from your filesystem | Inline error: "isn't a CSV or JSON file" |
+| Click **Survey responses** | Auto-picks **bar chart** for `role × respondents` with caption explaining the choice |
+| Click **Monthly revenue** | Auto-picks **line chart** for the time series |
+| Click **Country rankings** | Auto-picks **bar chart** (10 categories ≤ 12) |
+| Open **show the spec** disclosure under any chart | Reveals the Vega-Lite spec JSON + the reasoning |
+| Override a column's type in the schema table | Chart re-renders with the new picks; caption updates |
+| Click **← drop another file** | Resets to landing; previous overrides cleared |
+| Drop a `.txt` | Inline error: "isn't a CSV or JSON file" |
 | Drop a file >50 MB | Inline error: "Files over 50 MB aren't supported in v1" |
 | Resize viewport <768 px | Upload affordance hides; "Glimpse works best on desktop" panel shows |
 
@@ -66,34 +69,39 @@ npx gh-pages -d dist -b gh-pages
 
 Then in repo settings, point Pages at the `gh-pages` branch / root. Vite's `base: '/glimpse/'` is already configured so the site resolves at `phdemotions.github.io/glimpse`.
 
+## Tests
+
+```bash
+pnpm test            # vitest run
+pnpm test:watch      # vitest watch mode
+```
+
 ## Project structure
 
 ```
 glimpse/
-├── docs/
-│   ├── plans/
-│   │   ├── PLAN.md                                          ← durable index, 33 locked decisions, 5 CPs
-│   │   └── 2026-04-30-001-feat-glimpse-v1-plan.md           ← CP-1 plan
-│   ├── PRODUCT-BRIEF.md
-│   ├── VISUAL-IDENTITY.md
-│   └── TECHNICAL-ARCHITECTURE.md
-├── public/
-│   └── samples/                                             ← 3 curated CSVs
+├── docs/plans/                                              ← PLAN.md + per-CP plan files
 └── src/
-    ├── App.tsx                                              ← state machine
+    ├── App.tsx                                              ← state machine + selector + caption
     ├── components/
-    │   ├── Landing.tsx
-    │   ├── UploadDropzone.tsx
-    │   ├── MobileSoftBlock.tsx
-    │   ├── SchemaView.tsx
-    │   ├── ChartView.tsx
+    │   ├── Landing.tsx, UploadDropzone.tsx, MobileSoftBlock.tsx
+    │   ├── SchemaView.tsx                                   ← caption + chart + ViewSource + schema table
+    │   ├── ChartView.tsx                                    ← dispatches on ChartChoice.kind
+    │   ├── ConfidenceBadge.tsx, TypeOverrideDropdown.tsx
+    │   ├── ViewSource.tsx                                   ← spec JSON + why-this-chart
     │   └── ui/                                              ← Wordmark, Eyebrow, Button
     ├── data/
     │   ├── duckdb.ts                                        ← lazy + idle prefetch
     │   ├── ingest.ts                                        ← file → DuckDB table
-    │   └── schema.ts                                        ← types, cardinality, nulls
+    │   ├── schema.ts                                        ← extended ColumnInfo (subtype + confidence)
+    │   ├── sample-rows.ts                                   ← batched per-column sample fetcher
+    │   ├── type-detect.ts                                   ← date / ordinal / Likert / geographic
+    │   └── coerce.ts                                        ← BigInt → Number, Date → ISO
     ├── charts/
-    │   └── vega.ts                                          ← brand-styled Vega config + makeBarSpec
+    │   ├── vega.ts                                          ← brand config + 6 spec builders
+    │   ├── selector.ts                                      ← pure ChartChoice selector
+    │   ├── captions.ts                                      ← template-based plain-English captions
+    │   └── binning.ts                                       ← DuckDB pre-bin for histograms
     └── styles/
         ├── globals.css
         └── tokens.ts                                        ← Ink/Sage/Stone, typography, animation, layout, radius
@@ -101,7 +109,7 @@ glimpse/
 
 ## Status
 
-CP-1 (Foundation) shipping on `feat/cp-1-foundation`. CP-2 (Quick mode) next.
+CP-2 (Quick mode + view-source) shipping. CP-3 (Infographic mode) next.
 
 See [STATUS.md](STATUS.md) for session log and [docs/plans/PLAN.md](docs/plans/PLAN.md) for the full roadmap.
 
