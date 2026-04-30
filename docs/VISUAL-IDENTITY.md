@@ -22,24 +22,29 @@
 
 Self-host all three families in `public/fonts/`. Never load from a CDN.
 
-### Font files (locked filenames + licenses)
+### Font delivery (locked: @fontsource-variable, self-hosted via npm)
 
-Place these files in `public/fonts/` and declare via `@font-face` in `src/styles/globals.css`:
+Variable fonts ship via `@fontsource-variable` npm packages — bundled into `dist/` at build time. Equivalent to manual `public/fonts/` self-hosting on every privacy axis (no CDN, no phone-home, no Google Fonts) and removes the need to download and version-control WOFF2 files manually.
 
-| Family | Variable file (preferred) | Static fallback files | License | Source |
-|--------|---------------------------|-----------------------|---------|--------|
-| **Source Serif 4** | `SourceSerif4-VF.woff2`<br>`SourceSerif4-Italic-VF.woff2` | `SourceSerif4-Regular.woff2` (400)<br>`SourceSerif4-Italic.woff2` (400 italic)<br>`SourceSerif4-Semibold.woff2` (600) | **SIL OFL 1.1** | [github.com/adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif) |
-| **Inter** | `Inter-VariableFont_slnt,wght.woff2` | `Inter-Regular.woff2` (400)<br>`Inter-Medium.woff2` (500)<br>`Inter-SemiBold.woff2` (600) | **SIL OFL 1.1** | [github.com/rsms/inter](https://github.com/rsms/inter) |
-| **JetBrains Mono** | `JetBrainsMono-VariableFont_wght.woff2` | `JetBrainsMono-Regular.woff2` (400) | **Apache 2.0** | [github.com/JetBrains/JetBrainsMono](https://github.com/JetBrains/JetBrainsMono) |
+| Family | Package | Family name (CSS) | License | Source |
+|--------|---------|-------------------|---------|--------|
+| **Source Serif 4** | `@fontsource-variable/source-serif-4` (+ `/italic`) | `'Source Serif 4 Variable'` | **SIL OFL 1.1** | [github.com/adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif) |
+| **Inter** | `@fontsource-variable/inter` | `'Inter Variable'` | **SIL OFL 1.1** | [github.com/rsms/inter](https://github.com/rsms/inter) |
+| **JetBrains Mono** | `@fontsource-variable/jetbrains-mono` | `'JetBrains Mono Variable'` | **Apache 2.0** | [github.com/JetBrains/JetBrainsMono](https://github.com/JetBrains/JetBrainsMono) |
 
-**Format:** WOFF2 only — modern browsers, ~30% smaller than WOFF, ~50% smaller than TTF. Variable font versions preferred (one file covers full weight range).
+**Format:** WOFF2 variable. One file covers the full weight range.
 
-**License compliance:** Include each license file alongside the fonts in `public/fonts/`:
-- `public/fonts/SOURCE-SERIF-LICENSE.md` (OFL 1.1)
-- `public/fonts/INTER-LICENSE.md` (OFL 1.1)
-- `public/fonts/JETBRAINS-MONO-LICENSE.md` (Apache 2.0)
+**Imports** live in `src/main.tsx` ahead of `globals.css`:
+```ts
+import '@fontsource-variable/source-serif-4'
+import '@fontsource-variable/source-serif-4/italic.css'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/jetbrains-mono'
+```
 
-**`font-display: swap`** for all three so first paint is never blocked on font load. Sage eyebrow italic styling falls back gracefully to system serif italic until Source Serif loads.
+**License compliance:** each `@fontsource-variable` package ships its `LICENSE` file inside `node_modules/@fontsource-variable/<family>/`. Vite bundles the WOFF2 files into the production build; the LICENSE files live alongside in source. No additional copy step needed.
+
+**`font-display: swap`** is set by `@fontsource` defaults so first paint is never blocked on font load. Sage eyebrow italic styling falls back gracefully to system serif italic until Source Serif loads.
 
 ## Palette
 

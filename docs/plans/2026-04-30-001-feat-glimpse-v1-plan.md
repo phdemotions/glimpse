@@ -122,7 +122,7 @@ glimpse/
 ## Tasks (sequenced)
 
 1. **Initialize project** — `pnpm create vite glimpse --template react-ts`, add Tailwind 3, postcss, autoprefixer
-2. **Self-host fonts** — Source Serif 4, Inter, JetBrains Mono in `public/fonts/`, declared in `globals.css` (no Google Fonts CDN)
+2. **Self-host fonts via `@fontsource-variable`** — Source Serif 4 (`opsz` + `opsz-italic`), Inter (`opsz` + `opsz-italic`), JetBrains Mono (`wght`). Imported in `src/main.tsx`, bundled into `dist/` at build time. Privacy-equivalent to manual `public/fonts/` (no CDN, no Google Fonts) with simpler version management. Updated VISUAL-IDENTITY.md accordingly
 3. **Build design tokens** — `src/styles/tokens.ts` mirroring `opusvita-org/lib/design/tokens.js` (palette, typography, animation, layout, radius)
 4. **Wire Tailwind config** — extend with tokens; match family conventions
 5. **Build `<Landing>`** per **Landing v2 mockup** (approved 2026-04-30) — wordmark header ("Glimpse." with sage period) + about link, hairline rule, headline **"Show, don't tell."**, sub ("Drop a spreadsheet or paste a paper. Get a chart worth sharing."), dropzone, sample-data picker, privacy line, hairline rule, footer eyebrow ("an opus vita tool") + opusvita.org · github links
