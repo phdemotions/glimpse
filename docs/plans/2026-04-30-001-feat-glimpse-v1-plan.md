@@ -16,11 +16,11 @@ A first-time visitor lands on Glimpse, drops a CSV, and sees a useful, well-styl
 ## Non-goals (CP-1)
 
 - Infographic mode — CP-3
-- PDF parsing — CP-4
-- View-source pedagogy — CP-5
-- Service worker / offline — CP-6
-- Saved sessions — CP-6
+- View-source pedagogy — CP-3 (ships with infographic mode, the moat)
+- Service worker / offline — CP-4
+- Saved sessions — CP-4
 - Auto chart-type selection — CP-2
+- PDF parsing — out of v1 scope (Glimpse-PDF v1.1, separate product)
 
 ## Scope
 

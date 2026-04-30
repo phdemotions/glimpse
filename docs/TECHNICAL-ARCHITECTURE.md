@@ -100,7 +100,7 @@ CP-1 ships single-page. CP-3 introduces route-level segmentation:
 
 PDF route deferred with Glimpse-PDF v1.1. GitHub Pages SPA routing requires a `404.html` redirect trick — document and verify in CP-5.
 
-## Service worker (CP-6)
+## Service worker (CP-4)
 
 `vite-plugin-pwa` configured with:
 
@@ -110,7 +110,7 @@ PDF route deferred with Glimpse-PDF v1.1. GitHub Pages SPA routing requires a `4
 
 Service worker is **disabled in dev** to avoid cache staleness during iteration.
 
-## Storage model (Dexie, CP-6)
+## Storage model (Dexie, CP-4)
 
 ```ts
 // Pseudo-schema

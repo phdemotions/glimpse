@@ -53,7 +53,7 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 | 17 | **First-impressions never deferred** | Hard stop — landing/empty states ship the same session they are identified |
 | 18 | **Tailwind v3** | Match family stack — defer v4 migration until the rest of Opus Vita moves |
 | 19 | **Self-host fonts** | Privacy — no Google Fonts CDN |
-| 20 | **Domain v1: `phdemotions.github.io/glimpse`** | Free, instant, GitHub Pages default. Custom subdomain `glimpse.opusvita.org` deferred to post-CP-7 polish (5-min CNAME). Vite `base` configured for the subpath |
+| 20 | **Domain v1: `phdemotions.github.io/glimpse`** | Free, instant, GitHub Pages default. Custom subdomain `glimpse.opusvita.org` deferred to post-CP-5 polish (5-min CNAME). Vite `base` configured for the subpath |
 | 21 | **AI summary feature: dropped from v1** | Doc-review surfaced two blockers: (a) Anthropic/OpenAI APIs do not allow direct browser-origin calls — would require a proxy backend, breaking Decision #3; (b) UX wall — students will not obtain API keys + billing to paste into a webpage. Revisit only if real demand surfaces, and only with a proxy architecture decision |
 | 22 | **No iframe embed v1** | Export Vega-Lite spec JSON + standalone HTML instead. Anyone can self-host. Avoids X-Frame-Options config, sizing edge cases, and a new attack surface. Revisit only if real demand surfaces |
 | 23 | **Export formats v1: SVG + PNG + spec JSON** | SVG (scalable, Figma-editable), PNG (universal share), spec JSON (view-source + recipe sharing). Skip PDF — browser print covers it, jsPDF dep not worth ~200KB |
