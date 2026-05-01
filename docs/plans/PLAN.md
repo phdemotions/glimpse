@@ -2,8 +2,8 @@
 
 > Durable product plan. Locked decisions, open questions, risks, working agreements. Index for individual CP plan files.
 
-**Last updated:** 2026-04-30 (post-CP-1 ship + CP-2 plan revision — 35 locked decisions, 5 CPs)
-**Status:** CP-1 in PR; CP-2 plan active — view-source pulled forward into CP-2 per doc-review
+**Last updated:** 2026-04-30 (post-CP-2 ship + CP-3 plan revision — 38 locked decisions, 5 CPs + 1 mini-CP)
+**Status:** CP-1 + CP-2 merged. CP-3 plan active (worktree at `~/developer/glimpse-cp3/`)
 
 ---
 
@@ -39,7 +39,7 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 | 3 | **No backend, no auth, no DB in v1** | Data sovereignty is the product |
 | 4 | **Stack: Vite + React + TypeScript** | Right shape for offline-first SPA. ~50KB shell vs ~250KB Next.js. Native GitHub Pages SPA fit |
 | 5 | **Data engine: DuckDB-WASM** | 10–100x faster than Arquero or SQLite-WASM. Standard 2026 in-browser analytics |
-| 6 | **Single renderer: Vega-Lite for both Quick and Infographic modes** | One spec language, one bundle, one mental model. View-source pedagogy stays consistent across modes. Drops Mosaic + Plot per 2026-04-30 doc-review (three viz layers for ~5 chart types was unjustified) |
+| 6 | **Single renderer: Vega-Lite for both Quick and Infographic modes** | One spec language, one bundle, one mental model. View-source pedagogy stays consistent across modes. Drops Mosaic + Plot per 2026-04-30 doc-review. **All 8 CP-3 templates ship as Vega-Lite specs — including Single Stat with Context (rendered via `mark: 'text'` on a transparent canvas, not HTML/CSS). No exceptions, no second renderer.** |
 | 7 | _(reserved — was duplicated by #6)_ | Vega-Lite serves both modes per #6 |
 | 8 | _(deferred to Glimpse-PDF v1.1 — see #31)_ | PDF table extraction is its own product; was unfalsifiable scope risk for v1 |
 | 9 | **Storage: IndexedDB via Dexie.js** | Saved sessions, cached parsed data; raw IDB API too hostile |
@@ -69,6 +69,9 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 | 33 | **Glimpse positioned as funnel into Opus Vita research suite** | Resolves the brand-coherence concern (Product Lens). Glimpse is "free data tool by the team behind Claritas and Arbiter." Earns research-product brand equity by serving the audience upstream. Marketing copy and footer link reflect this |
 | 34 | **Date-format detection: ISO 8601 high confidence, US `M/D/YYYY` medium, else string** | New CP-2 sub-decision (was incorrectly cited as PLAN.md #5 in early CP-2 plan draft — corrected). ISO is unambiguous. US format is acknowledged because target audience writes US-formatted dates; medium confidence triggers user confirmation via override UI before committing to a line chart. Other locale-specific formats (D/M/YYYY, written month names) defer to evidence from real user files |
 | 35 | **3-tier confidence enum (`high` / `medium` / `low`) operationalizes Decision #24** | Decision #24 said "low-confidence flagging + override UI." CP-2 implements that via 3 discrete tiers, mapping cleanly to UI affordances: high = no badge, medium = subtle hint, low = inline override prompt. Discrete tiers avoid false numeric precision and stay defensible without analytics signal (Decision #28) |
+| 36 | **Excel parsing extracted to CP-3.5 mini-CP, not bundled with CP-3** | CP-1 risk note proposed CP-2; CP-2 deferred to CP-3; CP-3 doc-review (2026-04-30) flagged that Excel + 8 templates + export is too much for one CP. Excel becomes its own focused CP-3.5 (DuckDB-WASM `excel` extension load + ingest wiring + sample test). Lands between CP-3 merge and CP-4 start |
+| 37 | **Geographic Pattern map render deferred to post-v1 mini-CP** | CP-3 ships ranked-bar fallback for the Geographic template (reuses `makeRankingSpec`) with an honest banner: "geographic data detected — full world-map render coming after v1." Full choropleth + TopoJSON map is its own ~2-week mini-CP after Glimpse v1 ships. Honors Decision #6 (still Vega-Lite, just no map projection yet) |
+| 38 | **User-testing gap before CP-3 ship: accepted trade-off** | CP-3 doc-review (Adversarial) flagged that 8 templates designed by one author for an unobserved audience is "thesis-defended-without-data" — and Decision #28 (no analytics) makes post-ship blind too. Accepted: ship CP-3 on planner intuition + the 5-CSV detection corpus; first 3 think-aloud sessions go on the CP-3.5 / post-v1 docket. Reasoning: shipping the wedge against ChatGPT velocity-wise outranks pre-merge user testing for a free, no-account tool. Revisit if the trade-off bites in user feedback |
 
 ---
 
@@ -78,7 +81,8 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 |----|-------|-----------|--------|
 | CP-1 | **Foundation** — scaffold, layout, upload, DuckDB wired, sample CSV → first chart via Vega-Lite | [`2026-04-30-001-feat-glimpse-v1-plan.md`](2026-04-30-001-feat-glimpse-v1-plan.md) | Pending |
 | CP-2 | **Quick mode + view-source (the moat lands early)** — type detection, opinionated default Vega-Lite specs, plain-English captions, override UI, **view-source toggle exposing spec JSON + plain-English why** | [`2026-04-30-002-feat-quick-mode-cp-2-plan.md`](2026-04-30-002-feat-quick-mode-cp-2-plan.md) | Active |
-| CP-3 | **Infographic mode** — 8 templates as parametrized Vega-Lite specs, brand fills, social-share export (SVG/PNG/spec JSON). View-source component shipped in CP-2 is reused for templates | TBD | — |
+| CP-3 | **Infographic mode** — 8 templates as parametrized Vega-Lite specs (Single Stat via `mark: 'text'`), brand fills, social-share export (SVG/PNG/spec JSON with inlined font subsets), mode-default auto-switch when high-scoring template fits, reuses CP-2 view-source | [`2026-04-30-003-feat-infographic-mode-cp-3-plan.md`](2026-04-30-003-feat-infographic-mode-cp-3-plan.md) | Active |
+| CP-3.5 | **Excel parsing** *(focused mini-CP)* — DuckDB-WASM `excel` extension + ingest wiring + sample test | TBD | — |
 | CP-4 | **Persistence + offline** — Dexie sessions, service worker, install prompt | TBD | — |
 | CP-5 | **Polish + GitHub Pages deploy** | TBD | — |
 
@@ -155,6 +159,7 @@ _All initial open questions resolved 2026-04-30 — see locked decisions #20–#
 
 - **PDF parsing** — moved to Glimpse-PDF v1.1 (separate product, see Decision #31)
 - **AI summary / chart suggestion** — dropped (CORS + UX walls, see Decision #21)
+- **Geographic Pattern full world-map render** — CP-3 ships ranked-bar fallback; full choropleth deferred to post-v1 mini-CP (see Decision #37)
 - User accounts, auth, login
 - Cloud storage, sync across devices
 - Collaboration (multi-user editing)
