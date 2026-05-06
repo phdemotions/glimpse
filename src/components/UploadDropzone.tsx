@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react'
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024 // 50 MB
-// Excel deferred to CP-2 per the CP-1 risk note — DuckDB-WASM Excel scanner
-// requires extension loading and adds bundle weight not justified for v1 scope.
-const ACCEPTED_EXTENSIONS = ['csv', 'json'] as const
+const ACCEPTED_EXTENSIONS = ['csv', 'json', 'xlsx'] as const
 
 export type UploadError =
   | { kind: 'too-large'; file: File }
@@ -66,7 +64,7 @@ export function UploadDropzone({
     <div
       role="button"
       tabIndex={0}
-      aria-label="Upload a CSV or JSON file"
+      aria-label="Upload a CSV, Excel, or JSON file"
       onClick={handleClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -115,7 +113,7 @@ export function UploadDropzone({
           />
         </svg>
         <p className="font-serif text-lg text-ink-800">
-          Drop a CSV or JSON
+          Drop a CSV, Excel, or JSON file
         </p>
         <p className="font-sans text-sm text-sage-700">or click to choose</p>
       </div>
@@ -123,7 +121,7 @@ export function UploadDropzone({
         ref={inputRef}
         type="file"
         className="sr-only"
-        accept=".csv,.json"
+        accept=".csv,.json,.xlsx"
         onChange={(e) => handleFiles(e.target.files)}
       />
     </div>
