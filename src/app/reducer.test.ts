@@ -178,7 +178,7 @@ describe('appReducer', () => {
   })
 
   describe('SET_MODE', () => {
-    it('rejects infographic when no selectedTemplate', () => {
+    it('allows infographic even when no selectedTemplate (user picks from picker)', () => {
       const prev: AppState = {
         ...initialState,
         phase: 'ready',
@@ -189,7 +189,7 @@ describe('appReducer', () => {
         type: 'SET_MODE',
         mode: 'infographic',
       })
-      expect(next.mode).toBe('quick')
+      expect(next.mode).toBe('infographic')
     })
 
     it('allows infographic when selectedTemplate is set', () => {

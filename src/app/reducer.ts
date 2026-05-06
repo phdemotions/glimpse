@@ -111,12 +111,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       }
     }
 
-    case 'SET_MODE': {
-      if (action.mode === 'infographic' && !state.selectedTemplate) {
-        return state
-      }
+    case 'SET_MODE':
       return { ...state, mode: action.mode }
-    }
 
     case 'SELECT_TEMPLATE':
       return {
