@@ -3,11 +3,14 @@ import type { ColumnInfo, ColumnType, Schema } from '../data/schema'
 import type { ChartChoice } from '../charts/selector'
 import type { VegaSpec } from '../charts/vega'
 import type { Caption } from '../charts/captions'
+import type { Mode } from '../app/reducer'
 import { ChartView } from './ChartView'
 import { Wordmark } from './ui/Wordmark'
 import { ConfidenceBadge } from './ConfidenceBadge'
 import { TypeOverrideDropdown } from './TypeOverrideDropdown'
 import { ViewSource } from './ViewSource'
+import { ModeToggle } from './ModeToggle'
+import { InfographicCanvas } from './InfographicCanvas'
 
 type SchemaViewProps = {
   schema: Schema
@@ -17,6 +20,10 @@ type SchemaViewProps = {
   overrides: Record<string, ColumnType>
   onTypeOverride: (name: string, type: ColumnType) => void
   onReset: () => void
+  mode: Mode
+  selectedTemplate: string | null
+  onModeChange: (mode: Mode) => void
+  hasTemplates: boolean
 }
 
 const SUBTYPE_LABEL: Record<NonNullable<ColumnInfo['subtype']>, string> = {
@@ -43,6 +50,10 @@ export function SchemaView({
   overrides,
   onTypeOverride,
   onReset,
+  mode,
+  selectedTemplate,
+  onModeChange,
+  hasTemplates,
 }: SchemaViewProps) {
   const [spec, setSpec] = useState<VegaSpec | null>(null)
 
@@ -84,6 +95,15 @@ export function SchemaView({
             </h2>
           </div>
 
+          {/* Mode toggle */}
+          <div className="mb-8">
+            <ModeToggle
+              mode={mode}
+              onModeChange={onModeChange}
+              hasTemplates={hasTemplates}
+            />
+          </div>
+
           {/* Caption + chart */}
           <section className="mb-16">
             <div className="mb-6 max-w-2xl">
@@ -95,7 +115,17 @@ export function SchemaView({
               </p>
             </div>
 
-            <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
+            {mode === 'infographic' && selectedTemplate ? (
+              <InfographicCanvas>
+                <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
+              </InfographicCanvas>
+            ) : mode === 'infographic' && !selectedTemplate ? (
+              <p className="font-serif italic text-sage-700">
+                Select a template to get started
+              </p>
+            ) : (
+              <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
+            )}
 
             <ViewSource
               spec={spec}
