@@ -3,11 +3,26 @@ import { Landing, type SampleId } from './components/Landing'
 import { SchemaView } from './components/SchemaView'
 import { ingestFile } from './data/ingest'
 import { prefetchDuckDB } from './data/duckdb'
-import { getSchema, type ColumnType } from './data/schema'
+import { getSchema, type ColumnType, type ColumnInfo } from './data/schema'
 import type { UploadError } from './components/UploadDropzone'
 import { selectChart } from './charts/selector'
 import { captionFor } from './charts/captions'
 import { appReducer, initialState } from './app/reducer'
+import { applicableTemplates } from './templates/index'
+
+function computeApplicable(columns: ReadonlyArray<ColumnInfo>, overrides: Record<string, ColumnType>) {
+  const effective = columns.map((c) =>
+    overrides[c.name] ? { ...c, type: overrides[c.name] } : c,
+  )
+  return applicableTemplates(effective)
+}
+
+function toApplicableList(columns: ReadonlyArray<ColumnInfo>, overrides: Record<string, ColumnType> = {}) {
+  return computeApplicable(columns, overrides).map((t) => ({
+    id: t.id,
+    score: t.applicability_result.score,
+  }))
+}
 
 function describeUploadError(err: UploadError): string {
   if (err.kind === 'too-large') {
@@ -37,6 +52,11 @@ export default function App() {
     [choice],
   )
 
+  const applicable = useMemo(
+    () => (schemaColumns ? computeApplicable(schemaColumns, state.overrides) : []),
+    [schemaColumns, state.overrides],
+  )
+
   async function loadFile(file: File) {
     dispatch({ type: 'LOAD_FILE_START' })
     try {
@@ -46,7 +66,7 @@ export default function App() {
         type: 'LOAD_FILE_SUCCESS',
         schema,
         fileName: result.fileName,
-        applicableTemplates: [],
+        applicableTemplates: toApplicableList(schema.columns),
       })
     } catch (err) {
       dispatch({
@@ -78,16 +98,22 @@ export default function App() {
   }
 
   function handleTypeOverride(name: string, type: ColumnType) {
+    if (!state.schema) return
+    const nextOverrides = { ...state.overrides, [name]: type }
     dispatch({
       type: 'OVERRIDE_TYPE',
       name,
       columnType: type,
-      applicableTemplates: [],
+      applicableTemplates: toApplicableList(state.schema.columns, nextOverrides),
     })
   }
 
   function handleModeChange(mode: 'quick' | 'infographic') {
     dispatch({ type: 'SET_MODE', mode })
+  }
+
+  function handleSelectTemplate(id: string) {
+    dispatch({ type: 'SELECT_TEMPLATE', id })
   }
 
   if (
@@ -109,7 +135,9 @@ export default function App() {
         mode={state.mode}
         selectedTemplate={state.selectedTemplate}
         onModeChange={handleModeChange}
-        hasTemplates={state.selectedTemplate !== null}
+        hasTemplates={applicable.length > 0}
+        applicableTemplates={applicable}
+        onSelectTemplate={handleSelectTemplate}
       />
     )
   }

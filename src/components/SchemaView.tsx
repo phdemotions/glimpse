@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ColumnInfo, ColumnType, Schema } from '../data/schema'
 import type { ChartChoice } from '../charts/selector'
 import type { VegaSpec } from '../charts/vega'
 import type { Caption } from '../charts/captions'
 import type { Mode } from '../app/reducer'
+import type { Template, Applicability } from '../templates/types'
+import { TEMPLATES } from '../templates/index'
 import { ChartView } from './ChartView'
+import { InfographicView } from './InfographicView'
+import { TemplatePicker } from './TemplatePicker'
 import { Wordmark } from './ui/Wordmark'
 import { ConfidenceBadge } from './ConfidenceBadge'
 import { TypeOverrideDropdown } from './TypeOverrideDropdown'
 import { ViewSource } from './ViewSource'
 import { ModeToggle } from './ModeToggle'
-import { InfographicCanvas } from './InfographicCanvas'
 
 type SchemaViewProps = {
   schema: Schema
@@ -24,6 +27,8 @@ type SchemaViewProps = {
   selectedTemplate: string | null
   onModeChange: (mode: Mode) => void
   hasTemplates: boolean
+  applicableTemplates: Array<Template & { applicability_result: Applicability }>
+  onSelectTemplate: (id: string) => void
 }
 
 const SUBTYPE_LABEL: Record<NonNullable<ColumnInfo['subtype']>, string> = {
@@ -54,8 +59,23 @@ export function SchemaView({
   selectedTemplate,
   onModeChange,
   hasTemplates,
+  applicableTemplates,
+  onSelectTemplate,
 }: SchemaViewProps) {
   const [spec, setSpec] = useState<VegaSpec | null>(null)
+
+  const activeTemplate = useMemo(
+    () =>
+      selectedTemplate
+        ? TEMPLATES.find((t) => t.id === selectedTemplate) ?? null
+        : null,
+    [selectedTemplate],
+  )
+
+  const templateCaption = useMemo(
+    () => (activeTemplate ? activeTemplate.captionFor(schema.columns) : null),
+    [activeTemplate, schema.columns],
+  )
 
   const visibleColumns = schema.columns.slice(0, VISIBLE_COLUMN_LIMIT)
   const hiddenColumns = schema.columns.slice(VISIBLE_COLUMN_LIMIT)
@@ -104,34 +124,59 @@ export function SchemaView({
             />
           </div>
 
+          {/* Template picker (infographic mode) */}
+          {mode === 'infographic' ? (
+            <div className="mb-8">
+              <TemplatePicker
+                templates={applicableTemplates}
+                selectedTemplate={selectedTemplate}
+                onSelect={onSelectTemplate}
+                onBackToQuick={() => onModeChange('quick')}
+              />
+            </div>
+          ) : null}
+
           {/* Caption + chart */}
           <section className="mb-16">
-            <div className="mb-6 max-w-2xl">
-              <p className="font-serif text-sm italic text-sage-700">
-                {caption.eyebrow}
-              </p>
-              <p className="mt-2 font-serif text-lg text-ink-700">
-                {caption.body}
-              </p>
-            </div>
-
-            {mode === 'infographic' && selectedTemplate ? (
-              <InfographicCanvas>
+            {mode === 'infographic' && activeTemplate && templateCaption ? (
+              <>
+                <div className="mb-6 max-w-2xl">
+                  <p className="font-serif text-sm italic text-sage-700">
+                    {templateCaption.eyebrow}
+                  </p>
+                  <p className="mt-2 font-serif text-lg text-ink-700">
+                    {templateCaption.body}
+                  </p>
+                </div>
+                <InfographicView
+                  schema={schema}
+                  template={activeTemplate}
+                  onSpecBuilt={setSpec}
+                />
+                <ViewSource
+                  spec={spec}
+                  reasoning={templateCaption.body}
+                  caption={templateCaption.body}
+                />
+              </>
+            ) : mode === 'quick' ? (
+              <>
+                <div className="mb-6 max-w-2xl">
+                  <p className="font-serif text-sm italic text-sage-700">
+                    {caption.eyebrow}
+                  </p>
+                  <p className="mt-2 font-serif text-lg text-ink-700">
+                    {caption.body}
+                  </p>
+                </div>
                 <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
-              </InfographicCanvas>
-            ) : mode === 'infographic' && !selectedTemplate ? (
-              <p className="font-serif italic text-sage-700">
-                Select a template to get started
-              </p>
-            ) : (
-              <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
-            )}
-
-            <ViewSource
-              spec={spec}
-              reasoning={choice.reasoning}
-              caption={caption.body}
-            />
+                <ViewSource
+                  spec={spec}
+                  reasoning={choice.reasoning}
+                  caption={caption.body}
+                />
+              </>
+            ) : null}
           </section>
 
           {/* Schema */}
