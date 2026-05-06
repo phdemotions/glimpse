@@ -52,3 +52,4 @@ workbox-*.js
 # Scratch
 .scratch/
 *.tmp
+.vercel

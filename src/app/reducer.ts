@@ -1,8 +1,19 @@
 import type { ColumnType, Schema } from '../data/schema'
+import type { SheetMeta } from '../data/xlsx'
 
 export type Mode = 'quick' | 'infographic'
 
 export type ApplicableTemplate = { id: string; score: number }
+
+/**
+ * Plain-data view of an active xlsx workbook held by the reducer. The
+ * underlying ParsedWorkbook (with closures) lives in a ref in App, since
+ * functions don't belong in reducer state.
+ */
+export type WorkbookMeta = {
+  sheets: SheetMeta[]
+  activeSheet: string
+}
 
 export type AppState = {
   phase: 'idle' | 'loading' | 'ready' | 'error'
@@ -12,6 +23,7 @@ export type AppState = {
   selectedTemplate: string | null
   overrides: Record<string, ColumnType>
   error: string | null
+  workbook: WorkbookMeta | null
 }
 
 export type AppAction =
@@ -21,6 +33,7 @@ export type AppAction =
       schema: Schema
       fileName: string
       applicableTemplates: ApplicableTemplate[]
+      workbook?: WorkbookMeta | null
     }
   | { type: 'LOAD_FILE_ERROR'; message: string }
   | { type: 'RESET' }
@@ -43,6 +56,7 @@ export const initialState: AppState = {
   selectedTemplate: null,
   overrides: {},
   error: null,
+  workbook: null,
 }
 
 function resolveTemplateDefaults(
@@ -74,6 +88,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         fileName: action.fileName,
         overrides: {},
         error: null,
+        workbook: action.workbook ?? null,
         ...defaults,
       }
     }

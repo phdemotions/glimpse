@@ -1,7 +1,8 @@
+import type { ReactElement } from 'react'
 import type { TemplateId } from '../templates/types'
 import { colors } from '../styles/tokens'
 
-const THUMBNAILS: Record<TemplateId, () => JSX.Element> = {
+const THUMBNAILS: Record<TemplateId, () => ReactElement> = {
   'big-number': () => (
     <svg viewBox="0 0 80 60" className="w-full h-full">
       <text
