@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from 'vitest'
+import { describe, expect, it, beforeEach, afterEach } from 'vitest'
 import { TEMPLATES, getTemplates, applicableTemplates } from './index'
 import { AUTO_INFOGRAPHIC_THRESHOLD } from './types'
 import type { Template, TemplateId, Applicability } from './types'
@@ -18,8 +18,16 @@ function fakeTemplate(
   }
 }
 
+let savedTemplates: Template[]
+
+beforeEach(() => {
+  savedTemplates = [...TEMPLATES]
+  TEMPLATES.length = 0
+})
+
 afterEach(() => {
   TEMPLATES.length = 0
+  TEMPLATES.push(...savedTemplates)
 })
 
 describe('AUTO_INFOGRAPHIC_THRESHOLD re-export', () => {

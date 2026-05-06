@@ -1,7 +1,14 @@
 import type { Template, Applicability } from './types'
 import type { ColumnInfo } from '../data/schema'
+import { bigNumberTemplate } from './big-number'
+import { topNRankingTemplate } from './top-n-ranking'
+import { trendStoryTemplate } from './trend-story'
 
-export const TEMPLATES: Template[] = []
+export const TEMPLATES: Template[] = [
+  bigNumberTemplate,
+  topNRankingTemplate,
+  trendStoryTemplate,
+]
 
 export function getTemplates(): ReadonlyArray<Template> {
   return TEMPLATES
