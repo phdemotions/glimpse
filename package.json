@@ -26,7 +26,8 @@
     "@fontsource-variable/source-serif-4": "^5.2.9",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "vega-embed": "^7.1.0"
+    "vega-embed": "^7.1.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
