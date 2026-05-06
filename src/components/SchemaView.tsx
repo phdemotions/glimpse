@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ColumnInfo, ColumnType, Schema } from '../data/schema'
 import type { ChartChoice } from '../charts/selector'
 import type { VegaSpec } from '../charts/vega'
 import type { Caption } from '../charts/captions'
+import type { Mode } from '../app/reducer'
+import type { Template, Applicability } from '../templates/types'
+import { TEMPLATES } from '../templates/index'
 import { ChartView } from './ChartView'
+import { InfographicView } from './InfographicView'
+import { TemplatePicker } from './TemplatePicker'
 import { Wordmark } from './ui/Wordmark'
 import { ConfidenceBadge } from './ConfidenceBadge'
 import { TypeOverrideDropdown } from './TypeOverrideDropdown'
 import { ViewSource } from './ViewSource'
+import { ModeToggle } from './ModeToggle'
+import { ExportPanel, INFOGRAPHIC_DIMENSIONS } from './ExportPanel'
 
 type SchemaViewProps = {
   schema: Schema
@@ -17,6 +24,12 @@ type SchemaViewProps = {
   overrides: Record<string, ColumnType>
   onTypeOverride: (name: string, type: ColumnType) => void
   onReset: () => void
+  mode: Mode
+  selectedTemplate: string | null
+  onModeChange: (mode: Mode) => void
+  hasTemplates: boolean
+  applicableTemplates: Array<Template & { applicability_result: Applicability }>
+  onSelectTemplate: (id: string) => void
 }
 
 const SUBTYPE_LABEL: Record<NonNullable<ColumnInfo['subtype']>, string> = {
@@ -43,8 +56,31 @@ export function SchemaView({
   overrides,
   onTypeOverride,
   onReset,
+  mode,
+  selectedTemplate,
+  onModeChange,
+  hasTemplates,
+  applicableTemplates,
+  onSelectTemplate,
 }: SchemaViewProps) {
   const [spec, setSpec] = useState<VegaSpec | null>(null)
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const handleSvgReady = useCallback((svg: SVGSVGElement | null) => {
+    svgRef.current = svg
+  }, [])
+
+  const activeTemplate = useMemo(
+    () =>
+      selectedTemplate
+        ? TEMPLATES.find((t) => t.id === selectedTemplate) ?? null
+        : null,
+    [selectedTemplate],
+  )
+
+  const templateCaption = useMemo(
+    () => (activeTemplate ? activeTemplate.captionFor(schema.columns) : null),
+    [activeTemplate, schema.columns],
+  )
 
   const visibleColumns = schema.columns.slice(0, VISIBLE_COLUMN_LIMIT)
   const hiddenColumns = schema.columns.slice(VISIBLE_COLUMN_LIMIT)
@@ -84,24 +120,85 @@ export function SchemaView({
             </h2>
           </div>
 
+          {/* Mode toggle */}
+          <div className="mb-8">
+            <ModeToggle
+              mode={mode}
+              onModeChange={onModeChange}
+              hasTemplates={hasTemplates}
+            />
+          </div>
+
+          {/* Template picker (infographic mode) */}
+          {mode === 'infographic' ? (
+            <div className="mb-8">
+              <TemplatePicker
+                templates={applicableTemplates}
+                selectedTemplate={selectedTemplate}
+                onSelect={onSelectTemplate}
+                onBackToQuick={() => onModeChange('quick')}
+              />
+            </div>
+          ) : null}
+
           {/* Caption + chart */}
           <section className="mb-16">
-            <div className="mb-6 max-w-2xl">
-              <p className="font-serif text-sm italic text-sage-700">
-                {caption.eyebrow}
-              </p>
-              <p className="mt-2 font-serif text-lg text-ink-700">
-                {caption.body}
-              </p>
-            </div>
-
-            <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
-
-            <ViewSource
-              spec={spec}
-              reasoning={choice.reasoning}
-              caption={caption.body}
-            />
+            {mode === 'infographic' && activeTemplate && templateCaption ? (
+              <>
+                <div className="mb-6 max-w-2xl">
+                  <p className="font-serif text-sm italic text-sage-700">
+                    {templateCaption.eyebrow}
+                  </p>
+                  <p className="mt-2 font-serif text-lg text-ink-700">
+                    {templateCaption.body}
+                  </p>
+                </div>
+                <InfographicView
+                  schema={schema}
+                  template={activeTemplate}
+                  onSpecBuilt={setSpec}
+                  onSvgReady={handleSvgReady}
+                />
+                <ExportPanel
+                  svgRef={svgRef}
+                  spec={spec}
+                  filename={fileName.replace(/\.[^.]+$/, '')}
+                  dimensions={INFOGRAPHIC_DIMENSIONS}
+                />
+                <ViewSource
+                  spec={spec}
+                  reasoning={templateCaption.body}
+                  caption={templateCaption.body}
+                />
+              </>
+            ) : mode === 'quick' ? (
+              <>
+                <div className="mb-6 max-w-2xl">
+                  <p className="font-serif text-sm italic text-sage-700">
+                    {caption.eyebrow}
+                  </p>
+                  <p className="mt-2 font-serif text-lg text-ink-700">
+                    {caption.body}
+                  </p>
+                </div>
+                <ChartView
+                  schema={schema}
+                  choice={choice}
+                  onSpecBuilt={setSpec}
+                  onSvgReady={handleSvgReady}
+                />
+                <ExportPanel
+                  svgRef={svgRef}
+                  spec={spec}
+                  filename={fileName.replace(/\.[^.]+$/, '')}
+                />
+                <ViewSource
+                  spec={spec}
+                  reasoning={choice.reasoning}
+                  caption={caption.body}
+                />
+              </>
+            ) : null}
           </section>
 
           {/* Schema */}

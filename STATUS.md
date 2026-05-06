@@ -2,9 +2,10 @@
 
 ## Current state
 
-- **Phase:** CP-2 — Quick mode + view-source **shipping** on `feat/cp-2-quick-mode` (worktree at `~/developer/glimpse-cp2/`)
-- **Last session:** 2026-04-30 — CP-2 implementation end-to-end (8 units, 85 tests, all passing)
-- **Next action:** Push `feat/cp-2-quick-mode`, open PR against `main`, review, merge. Then begin CP-3 (Infographic mode — 8 templates reusing the view-source component)
+- **Phase:** CP-3 — Infographic mode **complete**, PR #3 open on `feat/cp-3-infographic` (worktree at `~/developer/glimpse-cp3/`)
+- **Build:** 257 tests / 27 files passing, production build clean
+- **Last session:** 2026-05-06 — CP-3 implementation (7 units + 1 bug fix), visual QA, PR #3 opened
+- **Next action:** Merge [PR #3](https://github.com/phdemotions/glimpse/pull/3), then begin CP-3.5 (Excel parsing mini-CP — Decision #36)
 
 ## Session log
 
@@ -105,6 +106,40 @@ Shipped end-to-end CP-1 spine. From a cold landing, a user can drop a CSV/JSON o
 
 Branch ready to push + PR.
 
+### 2026-05-06 — CP-3 Infographic mode implementation (feat/cp-3-infographic)
+
+Worktree at `~/developer/glimpse-cp3/`. 7 implementation units shipped via serial subagents + 1 bug fix from visual QA.
+
+**Template system (`src/templates/`)**
+- `types.ts` — Template interface, TemplateId union (8 members), Applicability type with score/fit/reason
+- `index.ts` — Registry via direct imports into array literal (avoids circular dep from side-effect push pattern)
+- 8 templates: big-number, top-n-ranking, trend-story, distribution, part-to-whole, survey-likert, before-after, geographic-pattern
+- Each exports applicability (pure function → {fits, score}), specBuilder (data+columns → VegaSpec), captionFor
+
+**App state (`src/app/`)**
+- `reducer.ts` — useReducer replaces fragmented useState. Actions: LOAD_FILE_START/SUCCESS/ERROR, RESET, OVERRIDE_TYPE, SET_MODE, SELECT_TEMPLATE. AUTO_INFOGRAPHIC_THRESHOLD=95 auto-selects infographic mode when top template scores high
+- Bug fix: removed SET_MODE guard that blocked infographic entry without selectedTemplate — users need to enter mode to see picker
+
+**Components**
+- `ModeToggle.tsx` — Quick/Infographic segmented control
+- `InfographicCanvas.tsx` — 1200×675 fixed dimensions, CSS aspect-ratio scaling
+- `TemplatePicker.tsx` — 2-col card grid with applicability badges
+- `TemplateThumbnail.tsx` — 8 inline SVG symbolic previews
+- `InfographicView.tsx` — async DuckDB→dataPrep→specBuilder→vega-embed pipeline
+- `ExportPanel.tsx` — SVG/PNG/JSON ghost buttons with pending state
+
+**Export pipeline (`src/charts/`)**
+- `font-inline.ts` — WOFF2 fetch via ?url import, base64 into SVG <defs><style>
+- `export.ts` — downloadSvg (with inlined fonts), downloadPng (2x pixel ratio), downloadJson
+
+**Bug fixes during visual QA**
+- Big Number: `datum:` → `value:` encoding (pixel coords not data scale); added baseline properties
+- Reducer: removed SET_MODE infographic guard; ModeToggle hasTemplates prop gates UI instead
+
+**Commits:** 8 on `feat/cp-3-infographic` (U1–U7 + 1 fix)
+**Tests:** 257 across 27 files, all passing
+**PR:** [#3](https://github.com/phdemotions/glimpse/pull/3) opened against main
+
 ### 2026-04-30 — CP-2 Quick mode + view-source implementation (feat/cp-2-quick-mode)
 
 Worktree at `~/developer/glimpse-cp2/`. 8 implementation units shipped end-to-end. From the same upload flow as CP-1, the user now lands on a schema view with an auto-selected chart, plain-English caption, type-override per column, and a view-source toggle exposing the Vega-Lite spec.
@@ -154,14 +189,13 @@ Branch ready to push + PR after this commit.
 
 ## Health
 
-- Code: not started
-- Tests: not started
-- Docs: bootstrapped
-- Deploy: not deployed
+- Code: CP-1 + CP-2 merged, CP-3 PR open
+- Tests: 257 passing (27 files)
+- Docs: current
+- Deploy: not deployed (CP-5)
 
 ## Next session quickstart
 
-1. Read `docs/plans/PLAN.md` and `docs/plans/2026-04-30-001-feat-glimpse-v1-plan.md`
-2. Run `pnpm create vite glimpse --template react-ts` inside `~/developer/glimpse/`
-3. Move generated files into the existing repo root, install Tailwind 3, build design tokens
-4. Get visual approval on `<Landing>` mockup before writing the component
+1. `gh pr merge 3 --squash` (or review + merge PR #3)
+2. Plan CP-3.5 Excel parsing: `ce-plan` with Decision #36 context
+3. Or skip to CP-4 (Persistence + offline) if Excel is low priority
