@@ -2,12 +2,71 @@
 
 ## Current state
 
-- **Phase:** CP-3 — Infographic mode **complete**, PR #3 open on `feat/cp-3-infographic` (worktree at `~/developer/glimpse-cp3/`)
-- **Build:** 257 tests / 27 files passing, production build clean
-- **Last session:** 2026-05-06 — CP-3 implementation (7 units + 1 bug fix), visual QA, PR #3 opened
-- **Next action:** Merge [PR #3](https://github.com/phdemotions/glimpse/pull/3), then begin CP-3.5 (Excel parsing mini-CP — Decision #36)
+- **Phase:** CP-3.5 — Excel support **complete**, [PR #4](https://github.com/phdemotions/glimpse/pull/4) open on `feat/cp-3-5-excel`
+- **Build:** 289 tests / 31 files passing, production build clean
+- **Live preview:** https://glimpse-orpin.vercel.app (Vercel — env-conditional Vite base)
+- **Last session:** 2026-05-06 — CP-3.5 implementation (4 units + 1 cleanup commit + Vercel preview wiring)
+- **Next actions:**
+  1. Merge [PR #4](https://github.com/phdemotions/glimpse/pull/4)
+  2. **UX audit on Infographic mode templates** — current rendering on the bundled samples falls below the Dual Standard. Award-winning-design pass required before CP-4 (Persistence) starts. Track this as CP-3.6 or its own design audit, not as a CP-4 prereq slip.
+  3. CP-4 — Persistence + offline (Dexie sessions, service worker, install prompt)
 
 ## Session log
+
+### 2026-05-06 — CP-3.5 Excel support (feat/cp-3-5-excel, [PR #4](https://github.com/phdemotions/glimpse/pull/4))
+
+Shipped end-to-end Excel ingestion in 4 units. From the same dropzone as CSV/JSON, a user can now drop a multi-sheet `.xlsx`, see the first sheet auto-loaded, and swap sheets via an inline switcher above the schema headline.
+
+**Pre-existing typecheck cleanup**
+- Fixed 4 typecheck errors leftover from CP-3 (TS 6 + React 19 dropped global JSX namespace; 3 unused imports). STATUS at session start claimed "production build clean" but `pnpm build` was failing — surfaced when verifying CP-3.5 Unit 1.
+
+**Vercel preview wiring**
+- `vite.config.ts` `base` is now env-conditional: `/` when `VERCEL=1`, `/glimpse/` for the eventual GH Pages target. `GLIMPSE_BASE` overrides for ad-hoc deploys.
+- `vercel deploy --yes` first run auto-linked the project (`prj_YNBXSJLamOXdQV8kGoGGPpIQGzA3`); production alias is `glimpse-orpin.vercel.app`. Doesn't conflict with eventual GH Pages prod (Decision #2) — Vercel = preview-only.
+
+**Unit 1 — xlsx parser ([`src/data/xlsx.ts`](src/data/xlsx.ts))**
+- `parseWorkbook(file)` lazy-imports SheetJS Community Edition (xlsx 0.20.3 from the SheetJS CDN tarball — the npm registry version was abandoned in 2023). Lazy import lands xlsx in its own ~493KB chunk so CSV/JSON users pay zero bundle cost.
+- Reads with `cellDates: true`. Walks worksheet cells and rewrites Date-valued cells to ISO strings before `sheet_to_csv` — SheetJS's default `m/d/yy` cell format defeats both `dateNF` and `cell.z` overrides on the CSV writer, and the ISO bridge is what type-detect.ts's high-confidence date path needs.
+- Empty sheets (no `!ref` or zero data rows) filter out of metadata so callers can't pick a sheet that produces a zero-row CSV.
+- Zip-magic-byte pre-check distinguishes `Failed to parse Excel workbook` (not a zip) from `Excel workbook is empty` (real but data-less). SheetJS otherwise parses garbage into a zero-sheet workbook silently.
+- 8 vitest scenarios cover happy paths, multi-sheet ordering, CSV round-trip, empty-workbook + corrupt-file errors, unknown-sheet error, and ISO date emission.
+
+**Unit 2 — ingest integration ([`src/data/ingest.ts`](src/data/ingest.ts))**
+- `ingestFile` branches on extension. xlsx path: `parseWorkbook` → first sheet active → `getSheetCsv` → register CSV string with DuckDB via `registerFileBuffer` → `read_csv_auto` into the existing `glimpse` table.
+- xlsx parses up-front so corrupt/empty workbooks fail before opening a DuckDB connection.
+- Extracted `ingestCsvText`, `ingestTabularFile`, and `ingestActiveSheet` helpers; centralized SQL escaping in `escapeSqlLiteral`.
+- New `ingestWorkbookSheet(parsed, sheetName, fileName)` for the sheet-switch path — re-uses the parsed handle, re-registers a new CSV buffer, replaces the `glimpse` table.
+- `IngestResult` extended with optional `workbook?: WorkbookHandle` (sheets, activeSheet, parsed); CSV/JSON paths leave it undefined so existing call sites keep working.
+- 11 vitest scenarios with mocked DuckDB: CSV/JSON routing, .xls rejection, SQL-quote escaping, single + multi-sheet xlsx happy paths, empty/corrupt error propagation, ISO date verification, sheet swap, unknown sheet error.
+
+**Unit 3 — UploadDropzone ([`src/components/UploadDropzone.tsx`](src/components/UploadDropzone.tsx))**
+- `ACCEPTED_EXTENSIONS` = `['csv', 'json', 'xlsx']`; `accept=".csv,.json,.xlsx"`.
+- Visible copy: `Drop a CSV, Excel, or JSON file`. aria-label updated to match. Subline `or click to choose` unchanged. App-level error copy parallel-updated.
+- Dropped the deferred-Excel comment block from CP-1 risk note.
+- New [`src/components/UploadDropzone.test.tsx`](src/components/UploadDropzone.test.tsx) — first dropzone test coverage. 7 scenarios: accept attribute, copy strings, xlsx happy path, .xls rejection, 50MB-over xlsx rejection, CSV regression.
+
+**Unit 4 — sheet switcher ([`src/components/SheetSwitcher.tsx`](src/components/SheetSwitcher.tsx))**
+- Inline pill row above the schema headline, hairline rule below. Hidden when `sheets.length === 1`. Active pill = sage-700 bold; inactive = ink-500 hover-sage-700. Long names truncate at 24 chars with full name on `title`.
+- App-level state plumbing:
+  - Reducer `AppState` gains plain-data `workbook: WorkbookMeta | null` (sheets + activeSheet). `LOAD_FILE_SUCCESS` extended with optional `workbook?: WorkbookMeta | null`.
+  - Parsed handle (closures + getSheetCsv) lives in a `parsedWorkbookRef` in App so functions stay out of reducer state.
+  - `reset()` clears both the ref and the workbook field — covered by an explicit test scenario so a stale switcher can never appear after re-uploading a CSV.
+  - `handleSheetSwitch(sheetName)` calls `ingestWorkbookSheet`, re-derives schema, dispatches `LOAD_FILE_SUCCESS` (which clears overrides via existing semantics).
+- `describeUploadError` copy updated: "isn't a CSV, Excel, or JSON file."
+- 6 vitest scenarios for `SheetSwitcher` (single-sheet hides, multi-sheet renders, aria-current, click swap, no-op on active click, long-name truncate).
+
+**Verification**
+- 289 / 289 tests pass (38 new across xlsx parser, ingest, dropzone, sheet switcher).
+- `pnpm build` clean. `dist/assets/xlsx-*.js` 493KB lazy chunk; main bundle 1.27MB (within 0.01MB of pre-CP-3.5).
+- Vercel prod alias verified to serve the new bundle (`Drop a CSV, Excel, or JSON file` string present in deployed JS).
+- Visual approval gate cleared for U3 dropzone copy + U4 switcher placement before implementation.
+
+**Open follow-ups**
+- Excel date columns with custom format codes may slip through as numbers (plan-deferred). File ISSUES entry if a real workbook breaks.
+- 600KB SheetJS chunk bloats first xlsx upload by ~150KB gzipped. Acceptable per plan; not pre-optimized.
+
+**Critical UX gap surfaced post-ship**
+- Infographic mode templates render below the Dual Standard on the bundled samples — typography, spacing, and visual hierarchy issues that would make a new user click away. Tracking as a separate design audit (CP-3.6 or its own track) before CP-4 begins.
 
 ### 2026-04-30 — Planning + doc scaffold + open-questions resolution
 
