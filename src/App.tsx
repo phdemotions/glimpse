@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useReducer } from 'react'
+import { useEffect, useMemo, useReducer, useRef } from 'react'
 import { Landing, type SampleId } from './components/Landing'
 import { SchemaView } from './components/SchemaView'
-import { ingestFile } from './data/ingest'
+import { ingestFile, ingestWorkbookSheet } from './data/ingest'
 import { prefetchDuckDB } from './data/duckdb'
 import { getSchema, type ColumnType, type ColumnInfo } from './data/schema'
 import type { UploadError } from './components/UploadDropzone'
+import type { ParsedWorkbook } from './data/xlsx'
 import { selectChart } from './charts/selector'
 import { captionFor } from './charts/captions'
 import { appReducer, initialState } from './app/reducer'
@@ -29,11 +30,15 @@ function describeUploadError(err: UploadError): string {
     const mb = (err.file.size / (1024 * 1024)).toFixed(1)
     return `${err.file.name} is ${mb} MB. Files over 50 MB aren't supported in v1.`
   }
-  return `${err.file.name} isn't a CSV or JSON file. Try one of those instead.`
+  return `${err.file.name} isn't a CSV, Excel, or JSON file. Try one of those instead.`
 }
 
 export default function App() {
   const [state, dispatch] = useReducer(appReducer, initialState)
+  // Parsed xlsx workbook handle (closures + sheet CSV accessor) — kept out of
+  // reducer state because functions don't belong in reducer state. Cleared on
+  // RESET and on every fresh upload.
+  const parsedWorkbookRef = useRef<ParsedWorkbook | null>(null)
 
   useEffect(() => {
     prefetchDuckDB()
@@ -62,11 +67,45 @@ export default function App() {
     try {
       const result = await ingestFile(file)
       const schema = await getSchema(result.tableName)
+      parsedWorkbookRef.current = result.workbook?.parsed ?? null
       dispatch({
         type: 'LOAD_FILE_SUCCESS',
         schema,
         fileName: result.fileName,
         applicableTemplates: toApplicableList(schema.columns),
+        workbook: result.workbook
+          ? {
+              sheets: result.workbook.sheets,
+              activeSheet: result.workbook.activeSheet,
+            }
+          : null,
+      })
+    } catch (err) {
+      dispatch({
+        type: 'LOAD_FILE_ERROR',
+        message: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  async function handleSheetSwitch(sheetName: string) {
+    const parsed = parsedWorkbookRef.current
+    if (!parsed || !state.fileName) return
+    dispatch({ type: 'LOAD_FILE_START' })
+    try {
+      const result = await ingestWorkbookSheet(parsed, sheetName, state.fileName)
+      const schema = await getSchema(result.tableName)
+      dispatch({
+        type: 'LOAD_FILE_SUCCESS',
+        schema,
+        fileName: result.fileName,
+        applicableTemplates: toApplicableList(schema.columns),
+        workbook: result.workbook
+          ? {
+              sheets: result.workbook.sheets,
+              activeSheet: result.workbook.activeSheet,
+            }
+          : null,
       })
     } catch (err) {
       dispatch({
@@ -94,6 +133,7 @@ export default function App() {
   }
 
   function reset() {
+    parsedWorkbookRef.current = null
     dispatch({ type: 'RESET' })
   }
 
@@ -138,6 +178,8 @@ export default function App() {
         hasTemplates={applicable.length > 0}
         applicableTemplates={applicable}
         onSelectTemplate={handleSelectTemplate}
+        workbook={state.workbook}
+        onSheetSwitch={handleSheetSwitch}
       />
     )
   }

@@ -3,7 +3,7 @@ import type { ColumnInfo, ColumnType, Schema } from '../data/schema'
 import type { ChartChoice } from '../charts/selector'
 import type { VegaSpec } from '../charts/vega'
 import type { Caption } from '../charts/captions'
-import type { Mode } from '../app/reducer'
+import type { Mode, WorkbookMeta } from '../app/reducer'
 import type { Template, Applicability } from '../templates/types'
 import { TEMPLATES } from '../templates/index'
 import { ChartView } from './ChartView'
@@ -15,6 +15,7 @@ import { TypeOverrideDropdown } from './TypeOverrideDropdown'
 import { ViewSource } from './ViewSource'
 import { ModeToggle } from './ModeToggle'
 import { ExportPanel, INFOGRAPHIC_DIMENSIONS } from './ExportPanel'
+import { SheetSwitcher } from './SheetSwitcher'
 
 type SchemaViewProps = {
   schema: Schema
@@ -30,6 +31,8 @@ type SchemaViewProps = {
   hasTemplates: boolean
   applicableTemplates: Array<Template & { applicability_result: Applicability }>
   onSelectTemplate: (id: string) => void
+  workbook?: WorkbookMeta | null
+  onSheetSwitch?: (sheetName: string) => void
 }
 
 const SUBTYPE_LABEL: Record<NonNullable<ColumnInfo['subtype']>, string> = {
@@ -62,6 +65,8 @@ export function SchemaView({
   hasTemplates,
   applicableTemplates,
   onSelectTemplate,
+  workbook,
+  onSheetSwitch,
 }: SchemaViewProps) {
   const [spec, setSpec] = useState<VegaSpec | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -112,7 +117,16 @@ export function SchemaView({
           {/* Title */}
           <div className="mb-8">
             <p className="font-serif text-sm italic text-sage-700">{fileName}</p>
-            <h2 className="mt-2 font-serif text-3xl md:text-4xl font-semibold text-ink-900 leading-tight">
+            {workbook && workbook.sheets.length > 1 && onSheetSwitch ? (
+              <div className="mt-2 pb-3 border-b border-ink-200">
+                <SheetSwitcher
+                  sheets={workbook.sheets}
+                  activeSheet={workbook.activeSheet}
+                  onSwitch={onSheetSwitch}
+                />
+              </div>
+            ) : null}
+            <h2 className="mt-3 font-serif text-3xl md:text-4xl font-semibold text-ink-900 leading-tight">
               {schema.rowCount.toLocaleString()}{' '}
               {schema.rowCount === 1 ? 'row' : 'rows'},{' '}
               {schema.columns.length}{' '}

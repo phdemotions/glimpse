@@ -10,16 +10,14 @@ async function buildWorkbookFile(sheets: SheetSpec[], fileName = 'test.xlsx'): P
     const ws = XLSX.utils.aoa_to_sheet(rows, { cellDates: true })
     XLSX.utils.book_append_sheet(wb, ws, name)
   }
+  // XLSX.write returns ArrayBuffer when type:'array' — pass through to File
+  // directly so TS sees a real ArrayBuffer, not Uint8Array<ArrayBufferLike>.
   const buf = XLSX.write(wb, {
     type: 'array',
     bookType: 'xlsx',
     cellDates: true,
-  }) as Uint8Array
-  // Copy into a fresh ArrayBuffer-backed Uint8Array so TS does not complain
-  // about Uint8Array<ArrayBufferLike> vs Uint8Array<ArrayBuffer> on File.
-  const bufCopy = new Uint8Array(buf.byteLength)
-  bufCopy.set(buf)
-  return new File([bufCopy], fileName, {
+  }) as ArrayBuffer
+  return new File([buf], fileName, {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
 }

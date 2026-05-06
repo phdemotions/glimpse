@@ -113,6 +113,7 @@ describe('appReducer', () => {
         selectedTemplate: 'tmpl-a',
         overrides: { col: 'numeric' },
         error: null,
+        workbook: null,
       }
       expect(appReducer(dirty, { type: 'RESET' })).toEqual(initialState)
     })
