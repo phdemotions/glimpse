@@ -6,6 +6,8 @@ import { trendStoryTemplate } from './trend-story'
 import { distributionTemplate } from './distribution'
 import { partToWholeTemplate } from './part-to-whole'
 import { surveyLikertTemplate } from './survey-likert'
+import { beforeAfterTemplate } from './before-after'
+import { geographicPatternTemplate } from './geographic-pattern'
 
 export const TEMPLATES: Template[] = [
   bigNumberTemplate,
@@ -14,6 +16,8 @@ export const TEMPLATES: Template[] = [
   distributionTemplate,
   partToWholeTemplate,
   surveyLikertTemplate,
+  beforeAfterTemplate,
+  geographicPatternTemplate,
 ]
 
 export function getTemplates(): ReadonlyArray<Template> {
