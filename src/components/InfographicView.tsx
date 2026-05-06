@@ -11,9 +11,10 @@ type Props = {
   schema: Schema
   template: Template
   onSpecBuilt?: (spec: VegaSpec | null) => void
+  onSvgReady?: (svg: SVGSVGElement | null) => void
 }
 
-export function InfographicView({ schema, template, onSpecBuilt }: Props) {
+export function InfographicView({ schema, template, onSpecBuilt, onSvgReady }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,6 +47,7 @@ export function InfographicView({ schema, template, onSpecBuilt }: Props) {
         })
         if (!cancelled) {
           onSpecBuilt?.(spec)
+          onSvgReady?.(containerRef.current?.querySelector('svg') ?? null)
           setError(null)
         }
       } catch (err) {
@@ -55,6 +57,7 @@ export function InfographicView({ schema, template, onSpecBuilt }: Props) {
             err instanceof Error ? err.message : 'Could not render infographic',
           )
           onSpecBuilt?.(null)
+          onSvgReady?.(null)
         }
       }
     }
@@ -63,7 +66,7 @@ export function InfographicView({ schema, template, onSpecBuilt }: Props) {
     return () => {
       cancelled = true
     }
-  }, [schema.tableName, schema.columns, template, onSpecBuilt])
+  }, [schema.tableName, schema.columns, template, onSpecBuilt, onSvgReady])
 
   return (
     <InfographicCanvas>

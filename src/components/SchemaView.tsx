@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ColumnInfo, ColumnType, Schema } from '../data/schema'
 import type { ChartChoice } from '../charts/selector'
 import type { VegaSpec } from '../charts/vega'
@@ -14,6 +14,7 @@ import { ConfidenceBadge } from './ConfidenceBadge'
 import { TypeOverrideDropdown } from './TypeOverrideDropdown'
 import { ViewSource } from './ViewSource'
 import { ModeToggle } from './ModeToggle'
+import { ExportPanel, INFOGRAPHIC_DIMENSIONS } from './ExportPanel'
 
 type SchemaViewProps = {
   schema: Schema
@@ -63,6 +64,10 @@ export function SchemaView({
   onSelectTemplate,
 }: SchemaViewProps) {
   const [spec, setSpec] = useState<VegaSpec | null>(null)
+  const svgRef = useRef<SVGSVGElement | null>(null)
+  const handleSvgReady = useCallback((svg: SVGSVGElement | null) => {
+    svgRef.current = svg
+  }, [])
 
   const activeTemplate = useMemo(
     () =>
@@ -152,6 +157,13 @@ export function SchemaView({
                   schema={schema}
                   template={activeTemplate}
                   onSpecBuilt={setSpec}
+                  onSvgReady={handleSvgReady}
+                />
+                <ExportPanel
+                  svgRef={svgRef}
+                  spec={spec}
+                  filename={fileName.replace(/\.[^.]+$/, '')}
+                  dimensions={INFOGRAPHIC_DIMENSIONS}
                 />
                 <ViewSource
                   spec={spec}
@@ -169,7 +181,17 @@ export function SchemaView({
                     {caption.body}
                   </p>
                 </div>
-                <ChartView schema={schema} choice={choice} onSpecBuilt={setSpec} />
+                <ChartView
+                  schema={schema}
+                  choice={choice}
+                  onSpecBuilt={setSpec}
+                  onSvgReady={handleSvgReady}
+                />
+                <ExportPanel
+                  svgRef={svgRef}
+                  spec={spec}
+                  filename={fileName.replace(/\.[^.]+$/, '')}
+                />
                 <ViewSource
                   spec={spec}
                   reasoning={choice.reasoning}

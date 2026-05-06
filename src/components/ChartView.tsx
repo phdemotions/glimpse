@@ -20,12 +20,14 @@ type ChartViewProps = {
   choice: ChartChoice
   /** Reports the live spec back to the parent so ViewSource can mirror it. */
   onSpecBuilt?: (spec: VegaSpec | null) => void
+  /** Exposes the rendered SVG element for export. */
+  onSvgReady?: (svg: SVGSVGElement | null) => void
 }
 
 const CATEGORICAL_TYPES: ColumnInfo['type'][] = ['string', 'date', 'boolean']
 const NUMERIC_TYPES: ColumnInfo['type'][] = ['numeric']
 
-export function ChartView({ schema, choice, onSpecBuilt }: ChartViewProps) {
+export function ChartView({ schema, choice, onSpecBuilt, onSvgReady }: ChartViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,6 +46,7 @@ export function ChartView({ schema, choice, onSpecBuilt }: ChartViewProps) {
     if (!containerRef.current) return
     if (effectiveKind === 'none') {
       onSpecBuilt?.(null)
+      onSvgReady?.(null)
       return
     }
     let cancelled = false
@@ -100,6 +103,7 @@ export function ChartView({ schema, choice, onSpecBuilt }: ChartViewProps) {
         })
         if (!cancelled) {
           onSpecBuilt?.(spec)
+          onSvgReady?.(containerRef.current?.querySelector('svg') ?? null)
           setError(null)
         }
       } catch (err) {
@@ -107,6 +111,7 @@ export function ChartView({ schema, choice, onSpecBuilt }: ChartViewProps) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Could not render chart')
           onSpecBuilt?.(null)
+          onSvgReady?.(null)
         }
       }
     }
@@ -123,6 +128,7 @@ export function ChartView({ schema, choice, onSpecBuilt }: ChartViewProps) {
     yField,
     choice.limit,
     onSpecBuilt,
+    onSvgReady,
   ])
 
   // 'none' kind without enough columns to even offer a manual picker.
