@@ -81,7 +81,7 @@ Glimpse is positioned as a free, no-account on-ramp into the Opus Vita research 
 |----|-------|-----------|--------|
 | CP-1 | **Foundation** — scaffold, layout, upload, DuckDB wired, sample CSV → first chart via Vega-Lite | [`2026-04-30-001-feat-glimpse-v1-plan.md`](2026-04-30-001-feat-glimpse-v1-plan.md) | Pending |
 | CP-2 | **Quick mode + view-source (the moat lands early)** — type detection, opinionated default Vega-Lite specs, plain-English captions, override UI, **view-source toggle exposing spec JSON + plain-English why** | [`2026-04-30-002-feat-quick-mode-cp-2-plan.md`](2026-04-30-002-feat-quick-mode-cp-2-plan.md) | Active |
-| CP-3 | **Infographic mode** — 8 templates as parametrized Vega-Lite specs (Single Stat via `mark: 'text'`), brand fills, social-share export (SVG/PNG/spec JSON with inlined font subsets), mode-default auto-switch when high-scoring template fits, reuses CP-2 view-source | [`2026-04-30-003-feat-infographic-mode-cp-3-plan.md`](2026-04-30-003-feat-infographic-mode-cp-3-plan.md) | Active |
+| CP-3 | **Infographic mode** — 8 templates as parametrized Vega-Lite specs (Single Stat via `mark: 'text'`), brand fills, social-share export (SVG/PNG/spec JSON with inlined font subsets), mode-default auto-switch when high-scoring template fits, reuses CP-2 view-source | [`2026-04-30-003-feat-infographic-mode-cp-3-plan.md`](2026-04-30-003-feat-infographic-mode-cp-3-plan.md) | PR #3 open |
 | CP-3.5 | **Excel parsing** *(focused mini-CP)* — DuckDB-WASM `excel` extension + ingest wiring + sample test | TBD | — |
 | CP-4 | **Persistence + offline** — Dexie sessions, service worker, install prompt | TBD | — |
 | CP-5 | **Polish + GitHub Pages deploy** | TBD | — |

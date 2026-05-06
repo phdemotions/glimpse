@@ -150,6 +150,16 @@ date: YYYY-MM-DD
 
 ---
 
+## Template Conventions (CP-3+)
+
+- **Registration:** each template exports its object; `src/templates/index.ts` imports directly into the `TEMPLATES` array literal. No side-effect push pattern (causes circular deps)
+- **Vega-Lite text positioning:** use `value:` (pixel coords) not `datum:` (data scale) for fixed-position text marks. `datum:` generates phantom axes
+- **Applicability:** pure function `(columns) → {fits, score, reason?}`. Score ≥95 triggers auto-infographic mode (AUTO_INFOGRAPHIC_THRESHOLD)
+- **Infographic canvas:** fixed 1200×675 spec dimensions, scaled via CSS `aspect-ratio`. All templates target this viewport
+- **Export font inlining:** WOFF2 fetched via `?url` import, base64-encoded into SVG `<defs><style>` before PNG rasterization
+
+---
+
 ## Privacy Discipline (locked)
 
 - **Data never leaves the browser.** No telemetry of uploaded files. No phone-home requests during processing
@@ -171,4 +181,4 @@ Use `compound-engineering:ce-plan` for new CPs and `compound-engineering:ce-comp
 
 ---
 
-*Last updated: 2026-04-30 — Initial scaffold.*
+*Last updated: 2026-05-06 — CP-3 template conventions added.*
