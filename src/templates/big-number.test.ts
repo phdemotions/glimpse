@@ -1,7 +1,6 @@
-import { describe, expect, it, afterEach } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { TEMPLATES } from './index'
 import type { ColumnInfo } from '../data/schema'
-import { colors, typography } from '../styles/tokens'
 import { formatHeadline } from './big-number'
 
 const numCol: ColumnInfo = {

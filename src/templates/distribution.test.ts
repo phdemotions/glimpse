@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES } from './index'
 import type { ColumnInfo } from '../data/schema'
-import { colors } from '../styles/tokens'
 
 const numCol: ColumnInfo = {
   name: 'count',

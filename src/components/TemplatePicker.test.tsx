@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import { TemplatePicker } from './TemplatePicker'
 import type { Template, Applicability } from '../templates/types'
-import type { ColumnInfo } from '../data/schema'
 
 function makeTemplate(
   id: string,
