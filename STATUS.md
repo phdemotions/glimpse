@@ -2,16 +2,64 @@
 
 ## Current state
 
-- **Phase:** CP-3.5 — Excel support **complete**, [PR #4](https://github.com/phdemotions/glimpse/pull/4) open on `feat/cp-3-5-excel`
-- **Build:** 289 tests / 31 files passing, production build clean
-- **Live preview:** https://glimpse-orpin.vercel.app (Vercel — env-conditional Vite base)
-- **Last session:** 2026-05-06 — CP-3.5 implementation (4 units + 1 cleanup commit + Vercel preview wiring)
+- **Phase:** CP-3.6 — Foundation **shipped** ([PR #5](https://github.com/phdemotions/glimpse/pull/5) merged, `6b33dc3`). Per-template phase (U4–U9) pending in worktree.
+- **Build:** 318 tests / 33 files passing, production build clean
+- **Live preview:** https://glimpse-orpin.vercel.app (Vercel — needs redeploy from main to pick up Foundation)
+- **Worktree:** `~/developer/glimpse-cp36/` on `feat/cp-3-6-infographic-ux-overhaul` — branch history diverges from main now that PR #5 squash-merged. Reset to main (or delete + recreate worktree from main) before starting U4.
+- **Last session:** 2026-05-06 — CP-3.5 ship + UX audit + CP-3.6 plan + Foundation phase (U1+U2+U3 across [PR #4](https://github.com/phdemotions/glimpse/pull/4) and [PR #5](https://github.com/phdemotions/glimpse/pull/5))
 - **Next actions:**
-  1. Merge [PR #4](https://github.com/phdemotions/glimpse/pull/4)
-  2. **UX audit on Infographic mode templates** — current rendering on the bundled samples falls below the Dual Standard. Award-winning-design pass required before CP-4 (Persistence) starts. Track this as CP-3.6 or its own design audit, not as a CP-4 prereq slip.
-  3. CP-4 — Persistence + offline (Dexie sessions, service worker, install prompt)
+  1. Redeploy main to Vercel prod alias (`vercel --prod` from main) so the in-spec frame is live for testing
+  2. Reset the worktree branch to main (`git fetch && git reset --hard origin/main` inside the worktree)
+  3. **CP-3.6 per-template phase** — U4+U5 (Big Number + Trend Story redesigns) get paired visual approval, then U6 (Top N + Geographic), U7+U8 (Part-to-Whole + Distribution), U9 (Likert + Before/After fixture samples + audit pass)
+  4. CP-4 — Persistence + offline (Dexie sessions, service worker, install prompt) — only after CP-3.6 fully ships
 
 ## Session log
+
+### 2026-05-06 — CP-3.6 Foundation phase ([PR #5](https://github.com/phdemotions/glimpse/pull/5) merged)
+
+After CP-3.5 shipped, spot-checked Infographic mode against the bundled samples and found every template falling below the Dual Standard (visceral *"would make someone click away"* reaction). Walked all 6 surfaceable templates × 3 samples on a 1280×900 viewport, captured the gaps in [`docs/audits/2026-05-06-cp-3-6-infographic-ux-audit.md`](docs/audits/2026-05-06-cp-3-6-infographic-ux-audit.md) — 7 systemic failures + 18 per-template findings. Locked CP-3.6 into PLAN.md as a pre-CP-4 blocker (Decisions #41 + the bit-in-feedback note on #38). Wrote the 9-unit plan ([`docs/plans/2026-05-06-002-feat-cp-3-6-infographic-ux-overhaul-plan.md`](docs/plans/2026-05-06-002-feat-cp-3-6-infographic-ux-overhaul-plan.md)) and shipped Foundation (U1+U2+U3) in PR #5.
+
+**Critical architectural decision (Plan D1):** the in-spec frame must live INSIDE the Vega-Lite spec as text-mark layers, not as a DOM HTML/CSS shell. Repo research surfaced the constraint: `src/charts/export.ts` consumes only the inline `<svg>` via `XMLSerializer + canvas` — no `html2canvas`, no DOM-region capture. A DOM shell would be invisible in shared SVG/PNG exports. Big Number's existing pattern of three text marks at pinned coords is what every template now adopts at scale.
+
+**Unit 1 — Frame contract + 8-template migration**
+
+- New [`src/charts/infographic-frame.ts`](src/charts/infographic-frame.ts): `INFOGRAPHIC_CANVAS = {1200, 675}`, `CHART_REGION` (the inner area templates render into), `Frame` type, and `wrapWithFrame(chartSpec, frame)` helper. The helper composes a vconcat with three sub-specs (header text marks → chart → footer text marks). 12 vitest scenarios cover happy paths, sub-spec dimensions, custom canvas overrides, empty-eyebrow handling, long-takeaway preservation.
+- Template contract: `Template.captionFor(columns) → {eyebrow, body}` is removed. Replaced by `Template.frameFor(columns, fileName) → {eyebrow, headline, takeaway, source}` — one source of truth that renders into the spec text marks AND into the DOM caption strip. Caption-spec drift becomes structurally impossible.
+- All 8 templates (big-number, trend-story, distribution, top-n-ranking, geographic-pattern, part-to-whole, survey-likert, before-after) migrated to emit chart-only specs sized to `CHART_REGION` and to provide `frameFor`. Big Number rebuilt to a single 120pt headline figure layer in the chart region (eyebrow / context lines now live in the frame around it). Geographic Pattern's in-canvas v1-disclaimer banner moved to `frame.takeaway`.
+- [`InfographicView.tsx`](src/components/InfographicView.tsx) calls `wrapWithFrame` after the template's `specBuilder` and `dataPrep`, threading `fileName` through so the frame's source line shows the dataset name. [`SchemaView.tsx`](src/components/SchemaView.tsx) reads `frameFor` for the DOM caption above the chart and drops the standalone DOM eyebrow/body strip (canvas IS the infographic now).
+- [`InfographicCanvas.tsx`](src/components/InfographicCanvas.tsx) adds `[&_svg]:w-full [&_svg]:h-full` so the embedded 1200×675 SVG scales to the visible canvas at narrower viewports — the source line and Glimpse wordmark would otherwise be clipped by `overflow-hidden` at viewports below 1200px.
+- [`ExportPanel.tsx`](src/components/ExportPanel.tsx) imports `INFOGRAPHIC_CANVAS` from the new module so the 1200×675 dimensions live in one place rather than being duplicated across templates and the export panel.
+
+**Unit 2 — Brand palette discipline**
+
+- Stripped the off-brand `'#A88B6A'` / `'#5B6B7A'` / `'#C97A5C'` hex codes from `VEGA_CONFIG.range.category` in [`src/charts/vega.ts`](src/charts/vega.ts). Replaced with a sage→ink ramp drawn entirely from the Arbiter design tokens.
+- New `categoricalScale(n)` exports a brand-only sequential ramp; new `DIVERGING_RANGE` provides a 3-color diverging palette (danger / ink-300 / sage-700) for Likert. Single source of truth so future categorical or diverging templates inherit the same brand-disciplined palette.
+- Part-to-Whole color encoding now sets `scale.range` to `categoricalScale(catCol.cardinality)` — no template can route around the brand palette without explicitly opting in.
+- Test guard: every entry in `VEGA_CONFIG.range.category` and every entry in part-to-whole's `scale.range` must come from `colors.sage` or `colors.ink`. The audit's *"sage / dark green / tan / slate-blue / terracotta"* color regression is now a test failure if it returns.
+
+**Unit 3 — Axis discipline foundation**
+
+- New [`src/charts/axis.ts`](src/charts/axis.ts) exports `withAxisDiscipline(kind, {dataMin, dataMax})` returning explicit `scale.domain`, `axis.format`, `axis.tickMinStep`, `axis.tickCount` for five data kinds: count (integer ticks, kills the Distribution decimal-tick bug), currency ($,d format with domain rounded below dataMin), percent (locked 0–1, .0% format), year-month (time format), numeric (does not expand domain to zero, defends against the Top-N overstatement bug).
+- Per-template adoption deliberately deferred to U5–U9 — each per-template unit will compose the helper into its existing axis blocks rather than touching every template twice.
+
+**Vercel preview wiring quirk**
+
+When verifying U1 visually, my Bash cwd was the main repo while the worktree held the work. Solved by adding a `glimpse-cp36` configuration to main's `.claude/launch.json` that runs `pnpm --dir /worktree dev --port 5174`. The launch.json edit is local-only — reverted after each verification round so the tracked file stays clean for teammates.
+
+**Verification at Foundation ship**
+
+- 318 / 318 tests pass (12 frame + 4 palette + 13 axis-helper + 289 baseline)
+- `pnpm build` clean
+- Visual: Big Number (727K), Trend Story, Part-to-Whole all rendering under the new shell with eyebrow / headline / takeaway / source / wordmark visible in the canvas — captured at 1280×1800 viewport
+- Part-to-Whole's chart now renders as a sage-ramp horizontal stacked bar normalized to 100% (audit's clashing-color regression killed)
+
+**Next: Per-template phase (U4–U9), each with its own visual approval round**
+
+Per Plan D13, templates are paired for combined approval to keep round-trips bounded:
+- U4 + U5: Big Number + Trend Story
+- U6: Top N + Geographic
+- U7 + U8: Part-to-Whole + Distribution
+- U9: Likert + Before/After fixture samples + audit pass
 
 ### 2026-05-06 — CP-3.5 Excel support (feat/cp-3-5-excel, [PR #4](https://github.com/phdemotions/glimpse/pull/4))
 
