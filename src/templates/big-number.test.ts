@@ -86,9 +86,34 @@ describe('big-number template', () => {
       expect(frame.eyebrow).toBe('big number')
     })
 
-    it('uses the column name as headline', () => {
+    it('prefixes "Total " to the column name in the headline', () => {
       const frame = getBigNumber().frameFor([numCol], 'revenue.csv')
-      expect(frame.headline).toBe('revenue')
+      expect(frame.headline).toBe('Total revenue')
+    })
+
+    it('derives a date-range takeaway when a date column + rows are supplied', () => {
+      const dateCol: ColumnInfo = {
+        name: 'month',
+        duckdbType: 'VARCHAR',
+        type: 'date',
+        subtype: null,
+        confidence: 'high',
+        nullCount: 0,
+        cardinality: 12,
+      }
+      const rows = [
+        { month: '2025-01-01', revenue: 100 },
+        { month: '2025-12-01', revenue: 200 },
+      ]
+      const frame = getBigNumber().frameFor([dateCol, numCol], 'revenue.csv', rows)
+      expect(frame.takeaway).toContain('Across 12 months')
+      expect(frame.takeaway).toContain('2025-01-01')
+      expect(frame.takeaway).toContain('2025-12-01')
+    })
+
+    it('falls back to a column-only takeaway when rows are missing', () => {
+      const frame = getBigNumber().frameFor([numCol], 'revenue.csv')
+      expect(frame.takeaway).toContain('revenue')
     })
 
     it('uses the supplied filename as the source line', () => {

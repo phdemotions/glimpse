@@ -84,15 +84,57 @@ function specBuilder(
   }
 }
 
+function pluralize(noun: string, count: number): string {
+  if (count === 1) return noun
+  if (/s$/i.test(noun)) return noun
+  return `${noun}s`
+}
+
+function describeRange(
+  rows: ReadonlyArray<Record<string, unknown>>,
+  dateCol: ColumnInfo | undefined,
+): string | null {
+  if (!dateCol || rows.length < 2) return null
+  const values = rows
+    .map((r) => r[dateCol.name])
+    .filter((v) => v !== null && v !== undefined)
+  if (values.length < 2) return null
+  const first = String(values[0]).slice(0, 10)
+  const last = String(values[values.length - 1]).slice(0, 10)
+  if (!first || !last || first === last) return null
+  return `${first} through ${last}`
+}
+
 function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
   fileName: string,
+  rows: ReadonlyArray<Record<string, unknown>> = [],
 ): Frame {
   const numCol = columns.find((c) => c.type === 'numeric')!
+  const dateCol = columns.find((c) => c.type === 'date' && c.cardinality >= 2)
+  const groupCol = columns.find(
+    (c) =>
+      (c.type === 'string' || c.type === 'boolean') &&
+      c.cardinality >= 2 &&
+      c.cardinality <= 50,
+  )
+
+  const range = describeRange(rows, dateCol)
+  let takeaway: string
+  if (dateCol && range) {
+    takeaway = `Across ${dateCol.cardinality} ${pluralize(dateCol.name, dateCol.cardinality)} — ${range}.`
+  } else if (dateCol) {
+    takeaway = `Across ${dateCol.cardinality} ${pluralize(dateCol.name, dateCol.cardinality)}.`
+  } else if (groupCol) {
+    takeaway = `Across ${groupCol.cardinality} ${pluralize(groupCol.name, groupCol.cardinality)}.`
+  } else {
+    takeaway = `A single headline figure for ${numCol.name}.`
+  }
+
   return {
     eyebrow: 'big number',
-    headline: numCol.name,
-    takeaway: `Showing ${numCol.name} as a single headline figure.`,
+    headline: `Total ${numCol.name}`,
+    takeaway,
     source: fileName,
   }
 }
