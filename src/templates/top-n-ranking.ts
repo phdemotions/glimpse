@@ -1,8 +1,8 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
-import type { Caption } from '../charts/captions'
 import type { Template, Applicability } from './types'
 import { makeRankingSpec } from '../charts/vega'
+import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 import { colors } from '../styles/tokens'
 
 function applicability(
@@ -30,8 +30,8 @@ function specBuilder(
 
   return {
     ...base,
-    width: 1200,
-    height: 675,
+    width: CHART_REGION.width,
+    height: CHART_REGION.height,
     encoding: {
       ...baseEncoding,
       color: {
@@ -42,16 +42,19 @@ function specBuilder(
   }
 }
 
-function captionFor(
+function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
-): Caption {
+  fileName: string,
+): Frame {
   const cat = columns.find(
     (c) => (c.type === 'string' || c.type === 'boolean') && c.cardinality >= 5 && c.cardinality <= 50,
   )!
   const num = columns.find((c) => c.type === 'numeric')!
   return {
     eyebrow: 'top 10',
-    body: `Ranking ${cat.name} by ${num.name} — the top 3 are highlighted.`,
+    headline: `Top ${cat.name} by ${num.name}`,
+    takeaway: `Ranking ${cat.name} by ${num.name} — the top 3 are highlighted.`,
+    source: fileName,
   }
 }
 
@@ -61,7 +64,7 @@ const topNRankingTemplate: Template = {
   description: 'Horizontal bar chart highlighting the top entries in a ranked list.',
   applicability,
   specBuilder,
-  captionFor,
+  frameFor,
 }
 
 export { topNRankingTemplate }

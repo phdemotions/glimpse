@@ -1,8 +1,8 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
-import type { Caption } from '../charts/captions'
 import type { Template, Applicability } from './types'
 import { VEGA_CONFIG } from '../charts/vega'
+import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 import { colors, typography } from '../styles/tokens'
 
 const SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v5.json'
@@ -26,8 +26,8 @@ function specBuilder(
 
   return {
     $schema: SCHEMA_URL,
-    width: 1200,
-    height: 675,
+    width: CHART_REGION.width,
+    height: CHART_REGION.height,
     config: VEGA_CONFIG,
     data: { values: [...data] },
     layer: [
@@ -75,14 +75,17 @@ function specBuilder(
   }
 }
 
-function captionFor(
+function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
-): Caption {
+  fileName: string,
+): Frame {
   const dateCol = columns.find((c) => c.type === 'date' && c.cardinality >= 3)!
   const numCol = columns.find((c) => c.type === 'numeric')!
   return {
     eyebrow: 'trend story',
-    body: `Tracking ${numCol.name} over time in ${dateCol.name} — peaks and dips are called out.`,
+    headline: `${numCol.name} over time`,
+    takeaway: `Tracking ${numCol.name} across ${dateCol.name} — peaks and dips are called out.`,
+    source: fileName,
   }
 }
 
@@ -92,7 +95,7 @@ const trendStoryTemplate: Template = {
   description: 'Time-series line chart with automatic peak and trough annotations.',
   applicability,
   specBuilder,
-  captionFor,
+  frameFor,
 }
 
 export { trendStoryTemplate }

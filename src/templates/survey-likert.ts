@@ -1,8 +1,8 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
-import type { Caption } from '../charts/captions'
 import type { Template, Applicability } from './types'
 import { VEGA_CONFIG } from '../charts/vega'
+import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 import { colors } from '../styles/tokens'
 
 const SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v5.json'
@@ -89,8 +89,8 @@ function specBuilder(
 
   return {
     $schema: SCHEMA_URL,
-    width: 1200,
-    height: 675,
+    width: CHART_REGION.width,
+    height: CHART_REGION.height,
     config: VEGA_CONFIG,
     data: { values: [...data] },
     transform: [
@@ -120,13 +120,16 @@ function specBuilder(
   }
 }
 
-function captionFor(
+function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
-): Caption {
+  fileName: string,
+): Frame {
   const likertCol = columns.find((c) => c.subtype === 'likert')!
   return {
     eyebrow: 'survey results',
-    body: `Showing responses from ${likertCol.name} — agreement pulls right, disagreement pulls left.`,
+    headline: `${likertCol.name} responses`,
+    takeaway: `Showing responses from ${likertCol.name} — agreement pulls right, disagreement pulls left.`,
+    source: fileName,
   }
 }
 
@@ -136,7 +139,7 @@ const surveyLikertTemplate: Template = {
   description: 'Diverging stacked bar for Likert-scale responses — agreement vs. disagreement at a glance.',
   applicability,
   specBuilder,
-  captionFor,
+  frameFor,
 }
 
 export { surveyLikertTemplate, buildSignExpression, getLikertSortOrder, buildLikertColorScale }

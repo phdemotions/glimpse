@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES } from './index'
 import type { ColumnInfo } from '../data/schema'
+import { colors } from '../styles/tokens'
 
 const numCol: ColumnInfo = {
   name: 'count',
@@ -101,23 +102,39 @@ describe('part-to-whole template', () => {
       expect(color.field).toBe('category')
     })
 
-    it('uses infographic dimensions', () => {
+    it('color encoding uses a brand-only sage ramp (no off-palette hues)', () => {
+      const spec = getPartToWhole().specBuilder(sampleData, [catCol, numCol]) as Record<string, unknown>
+      const encoding = spec.encoding as Record<string, unknown>
+      const color = encoding.color as Record<string, unknown>
+      const scale = color.scale as Record<string, unknown>
+      const range = scale.range as string[]
+      const allBrand = new Set<string>([
+        ...Object.values(colors.sage),
+        ...Object.values(colors.ink),
+      ])
+      expect(range.length).toBeGreaterThan(0)
+      for (const hex of range) {
+        expect(allBrand.has(hex)).toBe(true)
+      }
+    })
+
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getPartToWhole().specBuilder(sampleData, [catCol, numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "part-to-whole"', () => {
-      const caption = getPartToWhole().captionFor([catCol, numCol])
-      expect(caption.eyebrow).toBe('part-to-whole')
+      const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.eyebrow).toBe('part-to-whole')
     })
 
-    it('includes both column names in body', () => {
-      const caption = getPartToWhole().captionFor([catCol, numCol])
-      expect(caption.body).toContain('count')
-      expect(caption.body).toContain('category')
+    it('includes both column names in takeaway', () => {
+      const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('count')
+      expect(frame.takeaway).toContain('category')
     })
   })
 })

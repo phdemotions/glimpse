@@ -14,7 +14,7 @@ function makeTemplate(
     description: `${id} description`,
     applicability: () => ({ fits: true, score }),
     specBuilder: () => ({} as never),
-    captionFor: () => ({ eyebrow: '', body: '' }),
+    frameFor: () => ({ eyebrow: '', headline: '', takeaway: '', source: '' }),
     ...overrides,
     applicability_result: { fits: true, score },
   }

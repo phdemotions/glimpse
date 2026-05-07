@@ -1,8 +1,8 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
-import type { Caption } from '../charts/captions'
 import type { Template, Applicability } from './types'
 import { VEGA_CONFIG } from '../charts/vega'
+import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 import { colors } from '../styles/tokens'
 
 const SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v5.json'
@@ -28,8 +28,8 @@ function specBuilder(
 
   return {
     $schema: SCHEMA_URL,
-    width: 1200,
-    height: 675,
+    width: CHART_REGION.width,
+    height: CHART_REGION.height,
     config: VEGA_CONFIG,
     data: { values: [...data] },
     layer: [
@@ -56,13 +56,16 @@ function specBuilder(
   }
 }
 
-function captionFor(
+function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
-): Caption {
+  fileName: string,
+): Frame {
   const numCol = columns.find((c) => c.type === 'numeric')!
   return {
     eyebrow: 'distribution',
-    body: `Showing how ${numCol.name} values are spread — solid line marks the mean, dashed marks the median.`,
+    headline: `How ${numCol.name} is spread`,
+    takeaway: `Showing how ${numCol.name} values are spread — solid line marks the mean, dashed marks the median.`,
+    source: fileName,
   }
 }
 
@@ -72,7 +75,7 @@ const distributionTemplate: Template = {
   description: 'Histogram with mean and median rule lines — shows how a numeric variable is spread.',
   applicability,
   specBuilder,
-  captionFor,
+  frameFor,
 }
 
 export { distributionTemplate }

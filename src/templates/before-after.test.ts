@@ -119,11 +119,11 @@ describe('before-after template', () => {
       expect(scale.range).toEqual([colors.sage[400], colors.sage[900]])
     })
 
-    it('returns width=1200 and height=675', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const wideData = [{ department: 'Eng', before: 5, after: 8 }]
       const spec = getBA().specBuilder(wideData, [labelCol, beforeCol, afterCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
 
     it('handles single category (1 group of paired bars)', () => {
@@ -135,21 +135,21 @@ describe('before-after template', () => {
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "before / after"', () => {
-      const caption = getBA().captionFor([labelCol, beforeCol, afterCol])
-      expect(caption.eyebrow).toBe('before / after')
+      const frame = getBA().frameFor([labelCol, beforeCol, afterCol], 'data.csv')
+      expect(frame.eyebrow).toBe('before / after')
     })
 
-    it('includes column names in body for wide shape', () => {
-      const caption = getBA().captionFor([labelCol, beforeCol, afterCol])
-      expect(caption.body).toContain('before')
-      expect(caption.body).toContain('after')
+    it('includes column names in takeaway for wide shape', () => {
+      const frame = getBA().frameFor([labelCol, beforeCol, afterCol], 'data.csv')
+      expect(frame.takeaway).toContain('before')
+      expect(frame.takeaway).toContain('after')
     })
 
-    it('includes period column name in body for long shape', () => {
-      const caption = getBA().captionFor([catCol, numCol])
-      expect(caption.body).toContain('team')
+    it('includes period column name in takeaway for long shape', () => {
+      const frame = getBA().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('team')
     })
   })
 })

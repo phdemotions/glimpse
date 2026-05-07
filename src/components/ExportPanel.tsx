@@ -1,6 +1,7 @@
 import { useState, type RefObject } from 'react'
 import type { VegaSpec } from '../charts/vega'
 import { downloadSvg, downloadPng, downloadJson } from '../charts/export'
+import { INFOGRAPHIC_CANVAS } from '../charts/infographic-frame'
 
 type Props = {
   svgRef: RefObject<SVGSVGElement | null>
@@ -10,7 +11,7 @@ type Props = {
 }
 
 const QUICK_DIMENSIONS = { width: 800, height: 400 }
-const INFOGRAPHIC_DIMENSIONS = { width: 1200, height: 675 }
+const INFOGRAPHIC_DIMENSIONS = INFOGRAPHIC_CANVAS
 
 function resolveDimensions(
   svgEl: SVGSVGElement | null,

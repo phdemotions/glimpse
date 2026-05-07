@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   VEGA_CONFIG,
+  DIVERGING_RANGE,
+  categoricalScale,
   makeBarSpec,
   makeHistogramSpec,
   makeLineSpec,
@@ -8,6 +10,7 @@ import {
   makeRankingSpec,
   makeScatterSpec,
 } from './vega'
+import { colors } from '../styles/tokens'
 
 const SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json'
 
@@ -143,5 +146,53 @@ describe('all spec functions', () => {
       expect(spec.$schema).toBe(SCHEMA)
       expect(spec.config).toBe(VEGA_CONFIG)
     }
+  })
+})
+
+describe('VEGA_CONFIG.range.category', () => {
+  it('contains only colors from the brand sage and ink ramps', () => {
+    const sageHexes = new Set(Object.values(colors.sage))
+    const inkHexes = new Set(Object.values(colors.ink))
+    const allBrand = new Set<string>([...sageHexes, ...inkHexes])
+    const palette = (VEGA_CONFIG.range as { category: string[] }).category
+    for (const hex of palette) {
+      expect(allBrand.has(hex)).toBe(true)
+    }
+  })
+})
+
+describe('categoricalScale', () => {
+  it('returns the first n slots of the sage ramp for n <= 6', () => {
+    expect(categoricalScale(3)).toEqual([
+      colors.sage[800],
+      colors.sage[600],
+      colors.sage[400],
+    ])
+  })
+
+  it('returns 6 ramp slots for exactly 6 categories', () => {
+    expect(categoricalScale(6)).toHaveLength(6)
+  })
+
+  it('extends past the 6-slot ramp with brand-only fallbacks', () => {
+    const scale = categoricalScale(8)
+    expect(scale).toHaveLength(8)
+    const sageHexes = new Set(Object.values(colors.sage))
+    const inkHexes = new Set(Object.values(colors.ink))
+    const allBrand = new Set<string>([...sageHexes, ...inkHexes])
+    for (const hex of scale) {
+      expect(allBrand.has(hex)).toBe(true)
+    }
+  })
+
+  it('returns an empty array for zero categories', () => {
+    expect(categoricalScale(0)).toEqual([])
+  })
+})
+
+describe('DIVERGING_RANGE', () => {
+  it('exposes a 3-color diverging palette anchored on neutral ink', () => {
+    expect(DIVERGING_RANGE).toHaveLength(3)
+    expect(DIVERGING_RANGE[1]).toBe(colors.ink[300])
   })
 })
