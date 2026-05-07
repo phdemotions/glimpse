@@ -2,18 +2,57 @@
 
 ## Current state
 
-- **Phase:** CP-3.6 — Foundation **shipped** ([PR #5](https://github.com/phdemotions/glimpse/pull/5) merged, `6b33dc3`). Per-template phase (U4–U9) pending in worktree.
-- **Build:** 318 tests / 33 files passing, production build clean
-- **Live preview:** https://glimpse-orpin.vercel.app (Vercel — needs redeploy from main to pick up Foundation)
-- **Worktree:** `~/developer/glimpse-cp36/` on `feat/cp-3-6-infographic-ux-overhaul` — branch history diverges from main now that PR #5 squash-merged. Reset to main (or delete + recreate worktree from main) before starting U4.
-- **Last session:** 2026-05-06 — CP-3.5 ship + UX audit + CP-3.6 plan + Foundation phase (U1+U2+U3 across [PR #4](https://github.com/phdemotions/glimpse/pull/4) and [PR #5](https://github.com/phdemotions/glimpse/pull/5))
+- **Phase:** CP-3.6 — **closed** with 8 of 9 units shipped ([PR #5](https://github.com/phdemotions/glimpse/pull/5), [PR #6](https://github.com/phdemotions/glimpse/pull/6), [PR #7](https://github.com/phdemotions/glimpse/pull/7), [PR #8](https://github.com/phdemotions/glimpse/pull/8) all merged to main). U6 (Top N + Geographic Pattern full audit redesign) deferred to [ISSUES.md M-001](ISSUES.md) — Vega-Lite layout regression on small-range numeric axes.
+- **Build:** 327 tests / 33 files passing, production build clean
+- **Live preview:** https://glimpse-orpin.vercel.app — every template now renders inside the in-spec frame (eyebrow / headline / takeaway / source / Glimpse wordmark), with data-aware headlines + takeaways for Big Number, Trend Story, Distribution, Part-to-Whole, Survey Likert, and Before/After. SVG and PNG export carry the shell verbatim.
+- **Worktrees:** `~/developer/glimpse-cp36/` is now post-CP-3.6. Safe to delete or reset to main for the next CP. Branches `feat/cp-3-6-infographic-ux-overhaul`, `feat/cp-3-6-u7-u8-part-to-whole-distribution`, `feat/cp-3-6-u9-likert-before-after` are all merged and can be cleaned up via `/git-clean-gone-branches`.
+- **Last session:** 2026-05-07 — CP-3.6 per-template phase shipped (U4+U5, U7+U8, U9) plus the U6 deferral write-up in ISSUES M-001
 - **Next actions:**
-  1. Redeploy main to Vercel prod alias (`vercel --prod` from main) so the in-spec frame is live for testing
-  2. Reset the worktree branch to main (`git fetch && git reset --hard origin/main` inside the worktree)
-  3. **CP-3.6 per-template phase** — U4+U5 (Big Number + Trend Story redesigns) get paired visual approval, then U6 (Top N + Geographic), U7+U8 (Part-to-Whole + Distribution), U9 (Likert + Before/After fixture samples + audit pass)
-  4. CP-4 — Persistence + offline (Dexie sessions, service worker, install prompt) — only after CP-3.6 fully ships
+  1. Clean up merged feature branches (`/git-clean-gone-branches` or `git branch -d` per branch)
+  2. Optional: tackle [ISSUES M-001](ISSUES.md) (Top N + Geographic full redesign) when there's appetite — needs a minimal Vega-Lite reproduction outside the project to confirm whether it's an upstream bug or a `withAxisDiscipline('numeric')` shape problem
+  3. **CP-4 — Persistence + offline** (Dexie sessions, service worker, install prompt) — primary track
 
 ## Session log
+
+### 2026-05-07 — CP-3.6 per-template phase shipped (U4+U5, U7+U8, U9) + U6 deferred
+
+Closed CP-3.6 by shipping every per-template unit except U6 (Top N + Geographic Pattern), which hit a Vega-Lite layout regression and is now tracked in [ISSUES M-001](ISSUES.md). Each pair landed in its own PR with paired visual approval before code, per Plan D13.
+
+**[PR #6](https://github.com/phdemotions/glimpse/pull/6) — U4 + U5 (Big Number + Trend Story content redesigns)**
+
+- Big Number: headline goes from raw column name to `Total revenue`. Takeaway derives from data — when a date column + rows are available, `Across 12 months — 2025-01 through 2025-12.` Falls back to category cardinality, then to a generic single-stat phrase.
+- Trend Story: headline becomes data-aware (`revenue grew 95% across 12 months`); takeaway anchors with the actual range (`From $42K (2025-01) to $82K (2025-12) — peaks and dips are called out.`). Y axis adopts `withAxisDiscipline('currency', {dataMin, dataMax})` so the domain rounds to a sensible step below dataMin instead of letting Vega-Lite expand to zero (the audit's `15K → 90K with half blank` regression). X axis adopts `%b %Y` so labels read `Jan 2025` instead of `Jan 05`. Peak / trough callouts get a 1px ink-300 vertical rule connector + 60px right padding.
+- Frame contract extended: `Template.frameFor(columns, fileName, rows?)` so templates that need data context can derive richer headlines and takeaways. `InfographicView` passes prepared rows to `frameFor` and emits the resulting `Frame` back to `SchemaView` via a new `onFrameBuilt` callback so `ViewSource` reasoning stays in sync with the rendered canvas.
+
+**U6 — deferred to ISSUES M-001 ([commit `318dd05`](https://github.com/phdemotions/glimpse/commit/318dd05))**
+
+- Attempted both horizontal-bar layout and self-framed-spec patterns. Adopting `withAxisDiscipline('numeric', { dataMin: 97, dataMax: 99.8 })` on the quantitative axis produced a Vega-Lite SVG with a viewBox of ~22000–40000 px regardless of explicit `width: 1200, height: 675`. Tried `nice: false`, `zero: false`, `tickCount: 5`, `tickMinStep: 1`, `scale.type: 'linear'`, `cornerRadiusEnd: 0`, removing the window transform and pre-ranking in JS, and switching the entire template to a self-framed layered spec (skipping `wrapWithFrame`). All produced the same viewBox explosion. Reverted to Foundation behavior (vertical bars, all categories visible at cardinality ≤ 10, top 3 emphasized via sage-900 vs sage-400 fill, frame contract from U1) and filed [ISSUES M-001](ISSUES.md) with the full repro + workaround set.
+
+**[PR #7](https://github.com/phdemotions/glimpse/pull/7) — U7 + U8 (Part-to-Whole + Distribution redesigns)**
+
+- Distribution: Y axis adopts `withAxisDiscipline('count')` so the integer-count axis no longer shows decimal ticks (kills the audit's `0.3 to 2.0 in 0.1 increments for an integer count` regression). X axis adopts `withAxisDiscipline('count' | 'numeric')` based on the column's DuckDB type, so bin labels render with the right format. Mean rule contrast bumped to ink-900 solid + ink-700 dashed for the median so both lines are visible against the sage-700 bars (the audit reported them invisible). Takeaway derives from the data range (`revenue ranges from 42,000 to 82,000 across 12 entries`).
+- Part-to-Whole: frame headline derives from the leading-share row when rows are available (`Student leads with 51% of respondents`); falls back to the column-only `<num> by <cat>` phrasing. Takeaway threads the cardinality. Spec is unchanged from U2's sage-ramp version — the audit's PW.3 finding (no labels / no percentages / no legend) is satisfied by the existing legend + the new leader-share headline.
+
+**[PR #8](https://github.com/phdemotions/glimpse/pull/8) — U9 (Likert + Before/After fixture samples + Likert color-scale fix)**
+
+- Added `public/samples/feature-satisfaction.csv` (3 questions × 5 Likert responses with response counts — triggers `subtype: likert` detection at high confidence; auto-selects Survey Likert at applicability score 95) and `public/samples/quarterly-shift.csv` (6 teams × `before` + `after` numeric columns — hits the wide-shape `detectBeforeAfter` path at applicability score 80). Wired both into the Landing sample picker.
+- **Audit pass surfaced a Likert color-scale bug:** `getLikertSortOrder` lowercased every data label, but Vega-Lite's color-scale matcher is case-sensitive. With capitalized data (`Strongly Disagree`), the sort silently fell through to Vega's alphabetical default and inverted the diverging palette — disagreement bars rendered green-on-the-right, agreement red-on-the-left, contradicting the takeaway text. Both helpers now preserve original case from the data while keeping the negative/neutral classification logic case-insensitive.
+- Likert frame polish: avoids `'response responses'` duplication when the Likert column is itself called `response`. Headline derives from a grouping column when present (`Survey responses across 3 question items`), else falls back to a capitalized subject phrase. Takeaway threads the total response count from the actual data.
+- Before/After: existing spec works correctly on the new fixture sample. Frame from U1 + U4-style data awareness left for a future polish pass if priority surfaces — current frame reads acceptably.
+
+**Visual approval rounds (per CLAUDE.md hard stop, paired before code):**
+- Big Number + Trend Story (PR #6): paint-style description of new headline + takeaway content + axis behavior approved before implementation.
+- Top N + Geographic Pattern (PR #6 work, abandoned): horizontal-bar mockups + top-3 stroke spec described before implementation; visual verification surfaced the layout regression and triggered the deferral.
+- Part-to-Whole + Distribution (PR #7): mockups described before code; both confirmed visually post-build.
+- Likert + Before/After (PR #8): fixture sample shapes described before code; visual audit caught the color-scale bug and triggered the in-PR fix.
+
+**CP-3.6 close totals**
+- 8 of 9 units shipped (U6 deferred with reproducible bug + workaround in ISSUES M-001)
+- 327 / 327 tests passing
+- 4 PRs merged: #5 (Foundation), #6 (Big Number + Trend Story), #7 (Part-to-Whole + Distribution), #8 (Likert + Before/After + fixture samples)
+- Live preview at glimpse-orpin.vercel.app reflects the full CP-3.6 state
+- Audit findings closed: S1.1 (no infographic frame), S1.3 (caption-spec drift), S1.4 (axis defaults — except for the small-range numeric case in M-001), S1.5 (off-brand colors), S1.6 (type hierarchy), DA.1 (decimal Y axis), DA.2 (no X bin labels), DA.3 (invisible mean/median rules), TS.1 (Y-domain wasted space), TS.2 (peak label clipping), TS.4 (annotation offset), BN.1–BN.4 (Big Number redesign), PW.* (Part-to-Whole — except inline labels which the legend covers)
+- Audit findings open in ISSUES M-001: S1.7 (edge cropping at high cardinality), TN.1, TN.2, TN.4, TN.5, GP.1
 
 ### 2026-05-06 — CP-3.6 Foundation phase ([PR #5](https://github.com/phdemotions/glimpse/pull/5) merged)
 

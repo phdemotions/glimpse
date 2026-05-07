@@ -1,8 +1,9 @@
 ---
 title: "feat: CP-3.6 Infographic UX overhaul"
 type: feat
-status: active
+status: complete
 date: 2026-05-06
+completed: 2026-05-07
 origin: docs/audits/2026-05-06-cp-3-6-infographic-ux-audit.md
 ---
 
