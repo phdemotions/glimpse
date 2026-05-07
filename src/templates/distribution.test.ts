@@ -117,5 +117,29 @@ describe('distribution template', () => {
       const frame = getDistribution().frameFor([numCol], 'data.csv')
       expect(frame.takeaway).toContain('count')
     })
+
+    it('builds a range-aware takeaway when rows are supplied', () => {
+      const rows = [
+        { count: 10 },
+        { count: 50 },
+        { count: 100 },
+      ]
+      const frame = getDistribution().frameFor([numCol], 'data.csv', rows)
+      expect(frame.takeaway).toContain('10')
+      expect(frame.takeaway).toContain('100')
+    })
+  })
+
+  describe('axis discipline', () => {
+    it('uses integer Y-axis ticks (kills the audit decimal-tick bug)', () => {
+      const data = [{ count: 10 }, { count: 20 }, { count: 30 }]
+      const spec = getDistribution().specBuilder(data, [numCol]) as Record<string, unknown>
+      const layer = spec.layer as Array<Record<string, unknown>>
+      const histo = layer[0]
+      const encoding = histo.encoding as Record<string, Record<string, unknown>>
+      const yAxis = encoding.y.axis as Record<string, unknown>
+      expect(yAxis.format).toBe('d')
+      expect(yAxis.tickMinStep).toBe(1)
+    })
   })
 })
