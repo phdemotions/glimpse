@@ -5,7 +5,7 @@ import type { Template } from '../templates/types'
 import type { VegaSpec } from '../charts/vega'
 import { getDuckDB } from '../data/duckdb'
 import { coerceRow } from '../data/coerce'
-import { wrapWithFrame } from '../charts/infographic-frame'
+import { wrapWithFrame, type Frame } from '../charts/infographic-frame'
 import { InfographicCanvas } from './InfographicCanvas'
 
 type Props = {
@@ -14,9 +14,10 @@ type Props = {
   fileName: string
   onSpecBuilt?: (spec: VegaSpec | null) => void
   onSvgReady?: (svg: SVGSVGElement | null) => void
+  onFrameBuilt?: (frame: Frame | null) => void
 }
 
-export function InfographicView({ schema, template, fileName, onSpecBuilt, onSvgReady }: Props) {
+export function InfographicView({ schema, template, fileName, onSpecBuilt, onSvgReady, onFrameBuilt }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,7 +42,7 @@ export function InfographicView({ schema, template, fileName, onSpecBuilt, onSvg
           : rows
 
         const chartSpec = template.specBuilder(prepared, schema.columns)
-        const frame = template.frameFor(schema.columns, fileName)
+        const frame = template.frameFor(schema.columns, fileName, prepared)
         const spec = wrapWithFrame(chartSpec, frame)
 
         if (cancelled || !containerRef.current) return
@@ -52,6 +53,7 @@ export function InfographicView({ schema, template, fileName, onSpecBuilt, onSvg
         if (!cancelled) {
           onSpecBuilt?.(spec)
           onSvgReady?.(containerRef.current?.querySelector('svg') ?? null)
+          onFrameBuilt?.(frame)
           setError(null)
         }
       } catch (err) {
@@ -62,6 +64,7 @@ export function InfographicView({ schema, template, fileName, onSpecBuilt, onSvg
           )
           onSpecBuilt?.(null)
           onSvgReady?.(null)
+          onFrameBuilt?.(null)
         }
       }
     }
@@ -70,7 +73,7 @@ export function InfographicView({ schema, template, fileName, onSpecBuilt, onSvg
     return () => {
       cancelled = true
     }
-  }, [schema.tableName, schema.columns, template, fileName, onSpecBuilt, onSvgReady])
+  }, [schema.tableName, schema.columns, template, fileName, onSpecBuilt, onSvgReady, onFrameBuilt])
 
   return (
     <InfographicCanvas>

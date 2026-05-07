@@ -124,10 +124,23 @@ describe('trend-story template', () => {
       expect(frame.eyebrow).toBe('trend story')
     })
 
-    it('includes both column names in takeaway', () => {
+    it('falls back to a generic headline + takeaway when no rows are supplied', () => {
       const frame = getTrendStory().frameFor([dateCol, numCol], 'revenue.csv')
+      expect(frame.headline).toContain('over time')
       expect(frame.takeaway).toContain('revenue')
       expect(frame.takeaway).toContain('month')
+    })
+
+    it('builds a magnitude headline + currency-range takeaway from rows', () => {
+      const rows = [
+        { month: '2025-01', revenue: 41000 },
+        { month: '2025-06', revenue: 60000 },
+        { month: '2025-12', revenue: 82000 },
+      ]
+      const frame = getTrendStory().frameFor([dateCol, numCol], 'revenue.csv', rows)
+      expect(frame.headline).toMatch(/grew \d+%/)
+      expect(frame.takeaway).toContain('$41K')
+      expect(frame.takeaway).toContain('$82K')
     })
 
     it('passes the supplied filename through as source', () => {

@@ -5,6 +5,7 @@ import type { VegaSpec } from '../charts/vega'
 import type { Caption } from '../charts/captions'
 import type { Mode, WorkbookMeta } from '../app/reducer'
 import type { Template, Applicability } from '../templates/types'
+import type { Frame } from '../charts/infographic-frame'
 import { TEMPLATES } from '../templates/index'
 import { ChartView } from './ChartView'
 import { InfographicView } from './InfographicView'
@@ -69,9 +70,13 @@ export function SchemaView({
   onSheetSwitch,
 }: SchemaViewProps) {
   const [spec, setSpec] = useState<VegaSpec | null>(null)
+  const [templateFrame, setTemplateFrame] = useState<Frame | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
   const handleSvgReady = useCallback((svg: SVGSVGElement | null) => {
     svgRef.current = svg
+  }, [])
+  const handleFrameBuilt = useCallback((frame: Frame | null) => {
+    setTemplateFrame(frame)
   }, [])
 
   const activeTemplate = useMemo(
@@ -80,14 +85,6 @@ export function SchemaView({
         ? TEMPLATES.find((t) => t.id === selectedTemplate) ?? null
         : null,
     [selectedTemplate],
-  )
-
-  const templateFrame = useMemo(
-    () =>
-      activeTemplate
-        ? activeTemplate.frameFor(schema.columns, fileName)
-        : null,
-    [activeTemplate, schema.columns, fileName],
   )
 
   const visibleColumns = schema.columns.slice(0, VISIBLE_COLUMN_LIMIT)
@@ -160,7 +157,7 @@ export function SchemaView({
 
           {/* Caption + chart */}
           <section className="mb-16">
-            {mode === 'infographic' && activeTemplate && templateFrame ? (
+            {mode === 'infographic' && activeTemplate ? (
               <>
                 <InfographicView
                   schema={schema}
@@ -168,6 +165,7 @@ export function SchemaView({
                   fileName={fileName}
                   onSpecBuilt={setSpec}
                   onSvgReady={handleSvgReady}
+                  onFrameBuilt={handleFrameBuilt}
                 />
                 <ExportPanel
                   svgRef={svgRef}
@@ -177,8 +175,8 @@ export function SchemaView({
                 />
                 <ViewSource
                   spec={spec}
-                  reasoning={templateFrame.takeaway}
-                  caption={templateFrame.takeaway}
+                  reasoning={templateFrame?.takeaway ?? ''}
+                  caption={templateFrame?.takeaway ?? ''}
                 />
               </>
             ) : mode === 'quick' ? (

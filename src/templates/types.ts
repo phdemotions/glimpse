@@ -37,13 +37,16 @@ export type Template = {
   ) => VegaSpec
   /**
    * Returns the surrounding shell metadata. Same return value renders into
-   * the in-spec text-mark frame (visible in SVG/PNG export) and the DOM
-   * caption strip above the chart. Replaces the older `captionFor` whose
-   * body now lives in `frame.takeaway`.
+   * the in-spec text-mark frame (visible in SVG/PNG export) and the
+   * View-source reasoning string. The optional `rows` argument lets a
+   * template enrich the headline / takeaway from actual data (first/last
+   * values, min/max) when available — most templates ignore it. Replaces
+   * the older `captionFor` whose body now lives in `frame.takeaway`.
    */
   frameFor: (
     columns: ReadonlyArray<ColumnInfo>,
     fileName: string,
+    rows?: ReadonlyArray<Record<string, unknown>>,
   ) => Frame
   dataPrep?: (
     rows: ReadonlyArray<Record<string, unknown>>,

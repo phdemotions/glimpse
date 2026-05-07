@@ -3,6 +3,7 @@ import type { VegaSpec } from '../charts/vega'
 import type { Template, Applicability } from './types'
 import { VEGA_CONFIG } from '../charts/vega'
 import { CHART_REGION, type Frame } from '../charts/infographic-frame'
+import { withAxisDiscipline } from '../charts/axis'
 import { colors, typography } from '../styles/tokens'
 
 const SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v5.json'
@@ -16,6 +17,30 @@ function applicability(
   return { fits: true, score: 90 }
 }
 
+function numericExtent(
+  rows: ReadonlyArray<Record<string, unknown>>,
+  field: string,
+): { min: number; max: number } | null {
+  let min = Infinity
+  let max = -Infinity
+  let seen = false
+  for (const row of rows) {
+    const raw = Number(row[field])
+    if (!Number.isFinite(raw)) continue
+    seen = true
+    if (raw < min) min = raw
+    if (raw > max) max = raw
+  }
+  return seen ? { min, max } : null
+}
+
+function formatCurrencyShort(value: number): string {
+  const abs = Math.abs(value)
+  if (abs >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (abs >= 1_000) return `$${Math.round(value / 1_000)}K`
+  return `$${Math.round(value)}`
+}
+
 function specBuilder(
   data: ReadonlyArray<Record<string, unknown>>,
   columns: ReadonlyArray<ColumnInfo>,
@@ -24,10 +49,17 @@ function specBuilder(
   const numCol = columns.find((c) => c.type === 'numeric')!
   const temporal = dateCol.confidence === 'high'
 
+  const extent = numericExtent(data, numCol.name)
+  const yDiscipline = withAxisDiscipline(
+    'currency',
+    extent ? { dataMin: extent.min, dataMax: extent.max } : {},
+  )
+
   return {
     $schema: SCHEMA_URL,
     width: CHART_REGION.width,
     height: CHART_REGION.height,
+    padding: { left: 40, right: 60, top: 12, bottom: 30 },
     config: VEGA_CONFIG,
     data: { values: [...data] },
     layer: [
@@ -39,8 +71,21 @@ function specBuilder(
           strokeWidth: 2,
         },
         encoding: {
-          x: { field: dateCol.name, type: temporal ? 'temporal' : 'nominal' },
-          y: { field: numCol.name, type: 'quantitative' },
+          x: {
+            field: dateCol.name,
+            type: temporal ? 'temporal' : 'nominal',
+            ...(temporal
+              ? {
+                  axis: { format: '%b %Y', formatType: 'time', labelAngle: 0 },
+                }
+              : { axis: { labelAngle: 0 } }),
+          },
+          y: {
+            field: numCol.name,
+            type: 'quantitative',
+            ...yDiscipline,
+            axis: { ...yDiscipline.axis, title: numCol.name },
+          },
         },
       },
       {
@@ -58,18 +103,35 @@ function specBuilder(
           },
           { filter: 'datum._extremum !== null' },
         ],
-        mark: {
-          type: 'text',
-          dy: -15,
-          fontSize: 11,
-          font: typography.family.sans,
-          color: colors.ink[700],
-        },
-        encoding: {
-          x: { field: dateCol.name, type: temporal ? 'temporal' : 'nominal' },
-          y: { field: numCol.name, type: 'quantitative' },
-          text: { field: numCol.name, type: 'quantitative', format: ',.0f' },
-        },
+        layer: [
+          {
+            mark: {
+              type: 'rule',
+              stroke: colors.ink[300],
+              strokeWidth: 1,
+              y2: { expr: 'height' },
+            },
+            encoding: {
+              x: { field: dateCol.name, type: temporal ? 'temporal' : 'nominal' },
+              y: { field: numCol.name, type: 'quantitative' },
+            },
+          },
+          {
+            mark: {
+              type: 'text',
+              dy: -16,
+              fontSize: 12,
+              fontWeight: 600,
+              font: typography.family.sans,
+              color: colors.ink[800],
+            },
+            encoding: {
+              x: { field: dateCol.name, type: temporal ? 'temporal' : 'nominal' },
+              y: { field: numCol.name, type: 'quantitative' },
+              text: { field: numCol.name, type: 'quantitative', format: ',.0f' },
+            },
+          },
+        ],
       },
     ],
   }
@@ -78,13 +140,37 @@ function specBuilder(
 function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
   fileName: string,
+  rows: ReadonlyArray<Record<string, unknown>> = [],
 ): Frame {
   const dateCol = columns.find((c) => c.type === 'date' && c.cardinality >= 3)!
   const numCol = columns.find((c) => c.type === 'numeric')!
+
+  const extent = numericExtent(rows, numCol.name)
+  const firstDate = rows.length > 0 ? String(rows[0][dateCol.name] ?? '').slice(0, 7) : ''
+  const lastDate =
+    rows.length > 0 ? String(rows[rows.length - 1][dateCol.name] ?? '').slice(0, 7) : ''
+
+  let headline = `${numCol.name} over time`
+  if (extent && extent.min > 0 && rows.length >= 2) {
+    const change = Math.round(((extent.max - extent.min) / extent.min) * 100)
+    if (change > 0) {
+      headline = `${numCol.name} grew ${change}% across ${dateCol.cardinality} ${dateCol.name}s`
+    }
+  }
+
+  let takeaway = `Tracking ${numCol.name} across ${dateCol.cardinality} ${dateCol.name}s — peaks and dips are called out.`
+  if (extent && firstDate && lastDate) {
+    takeaway = `From ${formatCurrencyShort(extent.min)} (${firstDate}) to ${formatCurrencyShort(extent.max)} (${lastDate}) — peaks and dips are called out.`
+  }
+
+  if (headline.length > 60) {
+    headline = `${numCol.name} over time`
+  }
+
   return {
     eyebrow: 'trend story',
-    headline: `${numCol.name} over time`,
-    takeaway: `Tracking ${numCol.name} across ${dateCol.name} — peaks and dips are called out.`,
+    headline,
+    takeaway,
     source: fileName,
   }
 }
