@@ -131,10 +131,24 @@ describe('part-to-whole template', () => {
       expect(frame.eyebrow).toBe('part-to-whole')
     })
 
-    it('includes both column names in takeaway', () => {
+    it('includes the cardinality + category column name in takeaway', () => {
       const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv')
-      expect(frame.takeaway).toContain('count')
       expect(frame.takeaway).toContain('category')
+    })
+
+    it('builds a leader-share headline when rows are supplied', () => {
+      const rows = [
+        { category: 'A', count: 70 },
+        { category: 'B', count: 20 },
+        { category: 'C', count: 10 },
+      ]
+      const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv', rows)
+      expect(frame.headline).toMatch(/A leads with 70%/)
+    })
+
+    it('falls back to a generic headline when rows are missing', () => {
+      const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.headline).toBe('count by category')
     })
   })
 })

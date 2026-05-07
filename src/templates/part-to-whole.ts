@@ -61,9 +61,34 @@ function specBuilder(
   }
 }
 
+function leadingShare(
+  rows: ReadonlyArray<Record<string, unknown>>,
+  catField: string,
+  numField: string,
+): { name: string; share: number } | null {
+  if (rows.length === 0) return null
+  const totals = new Map<string, number>()
+  let grand = 0
+  for (const row of rows) {
+    const v = Number(row[numField])
+    if (!Number.isFinite(v)) continue
+    const key = String(row[catField] ?? '')
+    totals.set(key, (totals.get(key) ?? 0) + v)
+    grand += v
+  }
+  if (grand <= 0) return null
+  let best: { name: string; total: number } | null = null
+  for (const [name, total] of totals) {
+    if (!best || total > best.total) best = { name, total }
+  }
+  if (!best) return null
+  return { name: best.name, share: best.total / grand }
+}
+
 function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
   fileName: string,
+  rows: ReadonlyArray<Record<string, unknown>> = [],
 ): Frame {
   const catCol = columns.find(
     (c) =>
@@ -72,10 +97,26 @@ function frameFor(
       c.cardinality <= 8,
   )!
   const numCol = columns.find((c) => c.type === 'numeric')!
+
+  const leader = leadingShare(rows, catCol.name, numCol.name)
+
+  let headline = `${numCol.name} by ${catCol.name}`
+  if (leader && leader.name && leader.name.length <= 40) {
+    const pct = Math.round(leader.share * 100)
+    headline = `${leader.name} leads with ${pct}% of ${numCol.name}`
+  }
+  if (headline.length > 60) {
+    headline = `${numCol.name} by ${catCol.name}`
+  }
+
+  const takeaway = leader
+    ? `Across ${catCol.cardinality} ${catCol.name} categories — each segment shows its share of the total.`
+    : `Breaking down ${numCol.name} by ${catCol.name} — each segment shows its share of the total.`
+
   return {
     eyebrow: 'part-to-whole',
-    headline: `${numCol.name} by ${catCol.name}`,
-    takeaway: `Breaking down ${numCol.name} by ${catCol.name} — each segment shows its share of the total.`,
+    headline,
+    takeaway,
     source: fileName,
   }
 }
