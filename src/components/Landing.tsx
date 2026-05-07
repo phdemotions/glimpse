@@ -8,6 +8,8 @@ const SAMPLES = [
   { id: 'survey-responses', label: 'Survey responses' },
   { id: 'monthly-revenue', label: 'Monthly revenue' },
   { id: 'country-rankings', label: 'Country rankings' },
+  { id: 'feature-satisfaction', label: 'Feature satisfaction' },
+  { id: 'quarterly-shift', label: 'Quarterly shift' },
 ] as const
 
 export type SampleId = (typeof SAMPLES)[number]['id']
