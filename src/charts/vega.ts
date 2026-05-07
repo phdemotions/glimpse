@@ -46,14 +46,50 @@ export const VEGA_CONFIG = {
   point: { fill: colors.sage[700] },
   range: {
     category: [
-      colors.sage[700],
-      colors.ink[800],
-      '#A88B6A',
-      '#5B6B7A',
-      '#C97A5C',
+      colors.sage[800],
+      colors.sage[600],
+      colors.sage[400],
+      colors.sage[200],
+      colors.ink[700],
+      colors.ink[400],
     ],
   },
 }
+
+/**
+ * Sequential sage ramp for categorical fills inside a single infographic
+ * (e.g. Part-to-Whole segments). Returns the first `n` slots; beyond 6,
+ * pads with alternating ink shades so we never reach for off-brand hues.
+ *
+ * Replaces the audit's "Part-to-Whole pulled in 5 unrelated colors"
+ * regression at the spec layer (CP-3.6 plan, Decision D5).
+ */
+export function categoricalScale(n: number): string[] {
+  const RAMP = [
+    colors.sage[800],
+    colors.sage[600],
+    colors.sage[400],
+    colors.sage[200],
+    colors.ink[700],
+    colors.ink[400],
+  ]
+  if (n <= RAMP.length) return RAMP.slice(0, n)
+  const extra = Array.from({ length: n - RAMP.length }, (_, i) =>
+    i % 2 === 0 ? colors.sage[700] : colors.ink[300],
+  )
+  return [...RAMP, ...extra]
+}
+
+/**
+ * Diverging pair for Likert-style scales (negative ↔ neutral ↔ positive).
+ * Single source of truth so survey-likert.ts and any future diverging
+ * template inherit the same brand-disciplined endpoints.
+ */
+export const DIVERGING_RANGE = [
+  colors.danger,
+  colors.ink[300],
+  colors.sage[700],
+] as const
 
 type Row = Record<string, unknown>
 

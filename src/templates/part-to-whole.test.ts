@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TEMPLATES } from './index'
 import type { ColumnInfo } from '../data/schema'
+import { colors } from '../styles/tokens'
 
 const numCol: ColumnInfo = {
   name: 'count',
@@ -99,6 +100,22 @@ describe('part-to-whole template', () => {
       const encoding = spec.encoding as Record<string, unknown>
       const color = encoding.color as Record<string, unknown>
       expect(color.field).toBe('category')
+    })
+
+    it('color encoding uses a brand-only sage ramp (no off-palette hues)', () => {
+      const spec = getPartToWhole().specBuilder(sampleData, [catCol, numCol]) as Record<string, unknown>
+      const encoding = spec.encoding as Record<string, unknown>
+      const color = encoding.color as Record<string, unknown>
+      const scale = color.scale as Record<string, unknown>
+      const range = scale.range as string[]
+      const allBrand = new Set<string>([
+        ...Object.values(colors.sage),
+        ...Object.values(colors.ink),
+      ])
+      expect(range.length).toBeGreaterThan(0)
+      for (const hex of range) {
+        expect(allBrand.has(hex)).toBe(true)
+      }
     })
 
     it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {

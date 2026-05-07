@@ -1,7 +1,7 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
 import type { Template, Applicability } from './types'
-import { VEGA_CONFIG } from '../charts/vega'
+import { VEGA_CONFIG, categoricalScale } from '../charts/vega'
 import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 
 const SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v5.json'
@@ -50,6 +50,7 @@ function specBuilder(
       color: {
         field: catCol.name,
         type: 'nominal',
+        scale: { range: categoricalScale(catCol.cardinality) },
         legend: { title: catCol.name, orient: 'bottom' },
       },
       tooltip: [
