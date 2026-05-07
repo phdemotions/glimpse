@@ -25,29 +25,45 @@ function buildSignExpression(likertField: string, valueField: string): string {
   ].join(' : ')
 }
 
+const CANONICAL_LIKERT_ORDER = [
+  'strongly disagree',
+  'disagree',
+  'neutral',
+  'agree',
+  'strongly agree',
+  'negative',
+  'positive',
+  'low',
+  'medium',
+  'high',
+  'bad',
+  'ok',
+  'good',
+]
+
+/**
+ * Returns the Likert labels actually present in the data, sorted by canonical
+ * Likert order, preserving the original casing from the rows. Lowercased
+ * labels would mismatch Vega-Lite's case-sensitive scale matching when the
+ * source data is capitalized (e.g. "Strongly Disagree"), causing the sort to
+ * fall through to Vega's alphabetical default and inverting the diverging
+ * color encoding.
+ */
 function getLikertSortOrder(
   data: ReadonlyArray<Record<string, unknown>>,
   likertField: string,
 ): string[] {
-  const CANONICAL_ORDER = [
-    'strongly disagree',
-    'disagree',
-    'neutral',
-    'agree',
-    'strongly agree',
-    'negative',
-    'positive',
-    'low',
-    'medium',
-    'high',
-    'bad',
-    'ok',
-    'good',
-  ]
-  const seen = new Set(
-    data.map((r) => String(r[likertField] ?? '').toLowerCase()),
-  )
-  return CANONICAL_ORDER.filter((label) => seen.has(label))
+  const presentByLower = new Map<string, string>()
+  for (const row of data) {
+    const raw = String(row[likertField] ?? '')
+    const lower = raw.toLowerCase()
+    if (!presentByLower.has(lower) && raw) {
+      presentByLower.set(lower, raw)
+    }
+  }
+  return CANONICAL_LIKERT_ORDER
+    .filter((label) => presentByLower.has(label))
+    .map((label) => presentByLower.get(label)!)
 }
 
 function buildLikertColorScale(
@@ -65,8 +81,9 @@ function buildLikertColorScale(
   const NEUTRAL = new Set(['neutral', 'medium', 'ok'])
 
   return order.map((label) => {
-    if (NEGATIVE.has(label)) return colors.danger
-    if (NEUTRAL.has(label)) return colors.ink[300]
+    const lower = label.toLowerCase()
+    if (NEGATIVE.has(lower)) return colors.danger
+    if (NEUTRAL.has(lower)) return colors.ink[300]
     return colors.sage[700]
   })
 }
@@ -123,12 +140,44 @@ function specBuilder(
 function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
   fileName: string,
+  rows: ReadonlyArray<Record<string, unknown>> = [],
 ): Frame {
   const likertCol = columns.find((c) => c.subtype === 'likert')!
+  // Look for a grouping column (e.g. 'question', 'feature') that may add
+  // context — anything string/text that isn't the Likert column itself.
+  const groupCol = columns.find(
+    (c) =>
+      c !== likertCol &&
+      (c.type === 'string' || c.type === 'boolean') &&
+      c.cardinality >= 2 &&
+      c.cardinality <= 20,
+  )
+
+  // Avoid "response responses" when the Likert column is itself called
+  // "response" or "responses".
+  const subject = /respons/i.test(likertCol.name)
+    ? groupCol?.name ?? 'survey items'
+    : `${likertCol.name} responses`
+
+  const headline = groupCol
+    ? `Survey responses across ${groupCol.cardinality} ${groupCol.name} ${groupCol.cardinality === 1 ? 'item' : 'items'}`
+    : `${subject.charAt(0).toUpperCase()}${subject.slice(1)}`
+
+  const totalCount = rows.reduce((sum, r) => {
+    const numCol = columns.find((c) => c.type === 'numeric')
+    if (!numCol) return sum
+    const v = Number(r[numCol.name])
+    return Number.isFinite(v) ? sum + v : sum
+  }, 0)
+
+  const takeaway = totalCount > 0
+    ? `${totalCount.toLocaleString()} responses — agreement pulls right, disagreement pulls left.`
+    : `Showing ${subject} — agreement pulls right, disagreement pulls left.`
+
   return {
     eyebrow: 'survey results',
-    headline: `${likertCol.name} responses`,
-    takeaway: `Showing responses from ${likertCol.name} — agreement pulls right, disagreement pulls left.`,
+    headline: headline.length <= 70 ? headline : `Survey responses`,
+    takeaway,
     source: fileName,
   }
 }

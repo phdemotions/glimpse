@@ -119,14 +119,23 @@ describe('survey-likert template', () => {
   })
 
   describe('getLikertSortOrder', () => {
-    it('returns labels in canonical order filtered to data', () => {
+    it('returns labels in canonical order, preserving the casing from the data', () => {
       const data = [
         { rating: 'Agree' },
         { rating: 'Disagree' },
         { rating: 'Neutral' },
       ]
       const order = getLikertSortOrder(data, 'rating')
-      expect(order).toEqual(['disagree', 'neutral', 'agree'])
+      expect(order).toEqual(['Disagree', 'Neutral', 'Agree'])
+    })
+
+    it('preserves lowercase data when the data is already lowercase', () => {
+      const data = [
+        { rating: 'agree' },
+        { rating: 'disagree' },
+      ]
+      const order = getLikertSortOrder(data, 'rating')
+      expect(order).toEqual(['disagree', 'agree'])
     })
   })
 
@@ -139,6 +148,15 @@ describe('survey-likert template', () => {
       ]
       const scale = buildLikertColorScale(data, 'rating')
       expect(scale).toEqual([colors.danger, colors.ink[300], colors.sage[700]])
+    })
+
+    it('handles data with mixed casing without losing the case-sensitive Vega-Lite scale match', () => {
+      const data = [
+        { rating: 'Strongly Agree' },
+        { rating: 'Disagree' },
+      ]
+      const scale = buildLikertColorScale(data, 'rating')
+      expect(scale).toEqual([colors.danger, colors.sage[700]])
     })
   })
 })
