@@ -91,22 +91,22 @@ describe('survey-likert template', () => {
       expect(mark.type).toBe('bar')
     })
 
-    it('uses infographic dimensions', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getSurveyLikert().specBuilder(sampleData, [likertCol, numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "survey results"', () => {
-      const caption = getSurveyLikert().captionFor([likertCol, numCol])
-      expect(caption.eyebrow).toBe('survey results')
+      const frame = getSurveyLikert().frameFor([likertCol, numCol], 'data.csv')
+      expect(frame.eyebrow).toBe('survey results')
     })
 
-    it('includes likert column name in body', () => {
-      const caption = getSurveyLikert().captionFor([likertCol, numCol])
-      expect(caption.body).toContain('satisfaction')
+    it('includes likert column name in takeaway', () => {
+      const frame = getSurveyLikert().frameFor([likertCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('satisfaction')
     })
   })
 

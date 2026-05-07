@@ -62,23 +62,10 @@ describe('geographic-pattern template', () => {
       { country: 'DE', sales: 600 },
     ]
 
-    it('returns spec with width=1200 and height=675', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getGeo().specBuilder(sampleData, [geoCol, numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
-    })
-
-    it('title includes deferral subtitle', () => {
-      const spec = getGeo().specBuilder(sampleData, [geoCol, numCol]) as Record<string, unknown>
-      const title = spec.title as Record<string, unknown>
-      expect(title.subtitle).toBeDefined()
-      expect(typeof title.subtitle).toBe('string')
-    })
-
-    it('subtitle mentions "world-map render coming after v1"', () => {
-      const spec = getGeo().specBuilder(sampleData, [geoCol, numCol]) as Record<string, unknown>
-      const title = spec.title as Record<string, unknown>
-      expect(title.subtitle).toContain('world-map render coming after v1')
+      expect(spec.height).toBeLessThan(675)
     })
 
     it('preserves ranking transform from makeRankingSpec', () => {
@@ -87,29 +74,23 @@ describe('geographic-pattern template', () => {
       expect(transform).toBeDefined()
       expect(transform.length).toBeGreaterThanOrEqual(1)
     })
-
-    it('title text includes column names', () => {
-      const spec = getGeo().specBuilder(sampleData, [geoCol, numCol]) as Record<string, unknown>
-      const title = spec.title as Record<string, unknown>
-      expect(title.text).toBe('sales by country')
-    })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "geographic pattern"', () => {
-      const caption = getGeo().captionFor([geoCol, numCol])
-      expect(caption.eyebrow).toBe('geographic pattern')
+      const frame = getGeo().frameFor([geoCol, numCol], 'data.csv')
+      expect(frame.eyebrow).toBe('geographic pattern')
     })
 
-    it('includes both column names in body', () => {
-      const caption = getGeo().captionFor([geoCol, numCol])
-      expect(caption.body).toContain('country')
-      expect(caption.body).toContain('sales')
+    it('includes both column names in takeaway', () => {
+      const frame = getGeo().frameFor([geoCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('country')
+      expect(frame.takeaway).toContain('sales')
     })
 
-    it('mentions future map view', () => {
-      const caption = getGeo().captionFor([geoCol, numCol])
-      expect(caption.body).toContain('full map view')
+    it('mentions the deferred world-map view', () => {
+      const frame = getGeo().frameFor([geoCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('world-map')
     })
   })
 })

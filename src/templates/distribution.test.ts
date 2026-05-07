@@ -100,22 +100,22 @@ describe('distribution template', () => {
       expect(medianMark.strokeDash).toEqual([4, 4])
     })
 
-    it('uses infographic dimensions', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getDistribution().specBuilder(sampleData, [numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "distribution"', () => {
-      const caption = getDistribution().captionFor([numCol])
-      expect(caption.eyebrow).toBe('distribution')
+      const frame = getDistribution().frameFor([numCol], 'data.csv')
+      expect(frame.eyebrow).toBe('distribution')
     })
 
-    it('includes column name in body', () => {
-      const caption = getDistribution().captionFor([numCol])
-      expect(caption.body).toContain('count')
+    it('includes column name in takeaway', () => {
+      const frame = getDistribution().frameFor([numCol], 'data.csv')
+      expect(frame.takeaway).toContain('count')
     })
   })
 })

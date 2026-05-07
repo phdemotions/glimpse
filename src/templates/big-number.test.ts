@@ -49,14 +49,12 @@ describe('big-number template', () => {
   })
 
   describe('specBuilder', () => {
-    it('returns spec with 3 text-mark layers', () => {
+    it('returns chart-only spec with a single text-mark layer at the new architecture', () => {
       const data = [{ revenue: 42000 }]
       const spec = getBigNumber().specBuilder(data, [numCol]) as Record<string, unknown>
       const layer = spec.layer as unknown[]
-      expect(layer).toHaveLength(3)
-      layer.forEach((l) => {
-        expect((l as Record<string, unknown>).mark).toHaveProperty('type', 'text')
-      })
+      expect(layer).toHaveLength(1)
+      expect((layer[0] as Record<string, unknown>).mark).toHaveProperty('type', 'text')
     })
 
     it('formats headline value with commas for large numbers', () => {
@@ -73,23 +71,34 @@ describe('big-number template', () => {
       expect(dataValues[0]._value).toBe('1.2K')
     })
 
-    it('uses infographic dimensions', () => {
+    it('emits chart-only dimensions matching CHART_REGION (frame is composed by wrapWithFrame)', () => {
       const data = [{ revenue: 100 }]
       const spec = getBigNumber().specBuilder(data, [numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      // Chart region height < canvas height because header + footer reserve space.
+      expect(spec.height).toBeLessThan(675)
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "big number"', () => {
-      const caption = getBigNumber().captionFor([numCol])
-      expect(caption.eyebrow).toBe('big number')
+      const frame = getBigNumber().frameFor([numCol], 'revenue.csv')
+      expect(frame.eyebrow).toBe('big number')
     })
 
-    it('includes column name in body', () => {
-      const caption = getBigNumber().captionFor([numCol])
-      expect(caption.body).toContain('revenue')
+    it('uses the column name as headline', () => {
+      const frame = getBigNumber().frameFor([numCol], 'revenue.csv')
+      expect(frame.headline).toBe('revenue')
+    })
+
+    it('uses the supplied filename as the source line', () => {
+      const frame = getBigNumber().frameFor([numCol], 'revenue.csv')
+      expect(frame.source).toBe('revenue.csv')
+    })
+
+    it('mentions the column name in the takeaway', () => {
+      const frame = getBigNumber().frameFor([numCol], 'revenue.csv')
+      expect(frame.takeaway).toContain('revenue')
     })
   })
 

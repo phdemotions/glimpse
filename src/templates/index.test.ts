@@ -14,7 +14,7 @@ function fakeTemplate(
     description: `Test template ${id}`,
     applicability: applicabilityFn,
     specBuilder: () => ({}),
-    captionFor: () => ({ eyebrow: '', body: '' }),
+    frameFor: () => ({ eyebrow: '', headline: '', takeaway: '', source: '' }),
   }
 }
 

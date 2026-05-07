@@ -82,9 +82,12 @@ export function SchemaView({
     [selectedTemplate],
   )
 
-  const templateCaption = useMemo(
-    () => (activeTemplate ? activeTemplate.captionFor(schema.columns) : null),
-    [activeTemplate, schema.columns],
+  const templateFrame = useMemo(
+    () =>
+      activeTemplate
+        ? activeTemplate.frameFor(schema.columns, fileName)
+        : null,
+    [activeTemplate, schema.columns, fileName],
   )
 
   const visibleColumns = schema.columns.slice(0, VISIBLE_COLUMN_LIMIT)
@@ -157,19 +160,12 @@ export function SchemaView({
 
           {/* Caption + chart */}
           <section className="mb-16">
-            {mode === 'infographic' && activeTemplate && templateCaption ? (
+            {mode === 'infographic' && activeTemplate && templateFrame ? (
               <>
-                <div className="mb-6 max-w-2xl">
-                  <p className="font-serif text-sm italic text-sage-700">
-                    {templateCaption.eyebrow}
-                  </p>
-                  <p className="mt-2 font-serif text-lg text-ink-700">
-                    {templateCaption.body}
-                  </p>
-                </div>
                 <InfographicView
                   schema={schema}
                   template={activeTemplate}
+                  fileName={fileName}
                   onSpecBuilt={setSpec}
                   onSvgReady={handleSvgReady}
                 />
@@ -181,8 +177,8 @@ export function SchemaView({
                 />
                 <ViewSource
                   spec={spec}
-                  reasoning={templateCaption.body}
-                  caption={templateCaption.body}
+                  reasoning={templateFrame.takeaway}
+                  caption={templateFrame.takeaway}
                 />
               </>
             ) : mode === 'quick' ? (

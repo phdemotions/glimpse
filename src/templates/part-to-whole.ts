@@ -1,8 +1,8 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
-import type { Caption } from '../charts/captions'
 import type { Template, Applicability } from './types'
 import { VEGA_CONFIG } from '../charts/vega'
+import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 
 const SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v5.json'
 
@@ -34,8 +34,8 @@ function specBuilder(
 
   return {
     $schema: SCHEMA_URL,
-    width: 1200,
-    height: 675,
+    width: CHART_REGION.width,
+    height: CHART_REGION.height,
     config: VEGA_CONFIG,
     data: { values: [...data] },
     mark: { type: 'bar' },
@@ -60,9 +60,10 @@ function specBuilder(
   }
 }
 
-function captionFor(
+function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
-): Caption {
+  fileName: string,
+): Frame {
   const catCol = columns.find(
     (c) =>
       (c.type === 'string' || c.type === 'boolean') &&
@@ -72,7 +73,9 @@ function captionFor(
   const numCol = columns.find((c) => c.type === 'numeric')!
   return {
     eyebrow: 'part-to-whole',
-    body: `Breaking down ${numCol.name} by ${catCol.name} — each segment shows its share of the total.`,
+    headline: `${numCol.name} by ${catCol.name}`,
+    takeaway: `Breaking down ${numCol.name} by ${catCol.name} — each segment shows its share of the total.`,
+    source: fileName,
   }
 }
 
@@ -82,7 +85,7 @@ const partToWholeTemplate: Template = {
   description: 'Horizontal stacked bar normalized to 100% — shows how categories divide the total.',
   applicability,
   specBuilder,
-  captionFor,
+  frameFor,
 }
 
 export { partToWholeTemplate }

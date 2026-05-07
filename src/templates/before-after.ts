@@ -1,8 +1,8 @@
 import type { ColumnInfo } from '../data/schema'
 import type { VegaSpec } from '../charts/vega'
-import type { Caption } from '../charts/captions'
 import type { Template, Applicability } from './types'
 import { VEGA_CONFIG } from '../charts/vega'
+import { CHART_REGION, type Frame } from '../charts/infographic-frame'
 import { colors } from '../styles/tokens'
 import { detectBeforeAfter } from '../data/shape-detect'
 
@@ -45,8 +45,8 @@ function specBuilder(
 
     return {
       $schema: SCHEMA_URL,
-      width: 1200,
-      height: 675,
+      width: CHART_REGION.width,
+      height: CHART_REGION.height,
       config: VEGA_CONFIG,
       data: { values: prepared },
       mark: { type: 'bar' },
@@ -69,7 +69,6 @@ function specBuilder(
     }
   }
 
-  // Long shape — data already has category + value columns
   const periodCol = columns.find(
     (c) => (c.type === 'string' || c.type === 'boolean') && c.cardinality === 2,
   )!
@@ -81,8 +80,8 @@ function specBuilder(
 
   return {
     $schema: SCHEMA_URL,
-    width: 1200,
-    height: 675,
+    width: CHART_REGION.width,
+    height: CHART_REGION.height,
     config: VEGA_CONFIG,
     data: { values: [...data] },
     mark: { type: 'bar' },
@@ -104,15 +103,18 @@ function specBuilder(
   }
 }
 
-function captionFor(
+function frameFor(
   columns: ReadonlyArray<ColumnInfo>,
-): Caption {
+  fileName: string,
+): Frame {
   const shape = detectBeforeAfter(columns)!
 
   if (shape.kind === 'wide') {
     return {
       eyebrow: 'before / after',
-      body: `Comparing ${shape.beforeCol} vs ${shape.afterCol} side by side.`,
+      headline: `${shape.beforeCol} → ${shape.afterCol}`,
+      takeaway: `Comparing ${shape.beforeCol} vs ${shape.afterCol} side by side.`,
+      source: fileName,
     }
   }
 
@@ -121,7 +123,9 @@ function captionFor(
   )!
   return {
     eyebrow: 'before / after',
-    body: `Comparing values across ${periodCol.name} side by side.`,
+    headline: `Across ${periodCol.name}`,
+    takeaway: `Comparing values across ${periodCol.name} side by side.`,
+    source: fileName,
   }
 }
 
@@ -131,7 +135,7 @@ const beforeAfterTemplate: Template = {
   description: 'Paired bars comparing two time periods or conditions side by side.',
   applicability,
   specBuilder,
-  captionFor,
+  frameFor,
 }
 
 export { beforeAfterTemplate }

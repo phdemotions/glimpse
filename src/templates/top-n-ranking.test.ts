@@ -66,10 +66,10 @@ describe('top-n-ranking template', () => {
       { country: 'DE', revenue: 600 },
     ]
 
-    it('returns spec with width=1200 and height=675', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getTopN().specBuilder(sampleData, [catCol, numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
 
     it('has color condition for top-3 emphasis', () => {
@@ -91,16 +91,16 @@ describe('top-n-ranking template', () => {
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "top 10"', () => {
-      const caption = getTopN().captionFor([catCol, numCol])
-      expect(caption.eyebrow).toBe('top 10')
+      const frame = getTopN().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.eyebrow).toBe('top 10')
     })
 
-    it('includes both column names in body', () => {
-      const caption = getTopN().captionFor([catCol, numCol])
-      expect(caption.body).toContain('country')
-      expect(caption.body).toContain('revenue')
+    it('includes both column names in takeaway', () => {
+      const frame = getTopN().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('country')
+      expect(frame.takeaway).toContain('revenue')
     })
   })
 })

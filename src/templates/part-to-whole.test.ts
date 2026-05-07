@@ -101,23 +101,23 @@ describe('part-to-whole template', () => {
       expect(color.field).toBe('category')
     })
 
-    it('uses infographic dimensions', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getPartToWhole().specBuilder(sampleData, [catCol, numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "part-to-whole"', () => {
-      const caption = getPartToWhole().captionFor([catCol, numCol])
-      expect(caption.eyebrow).toBe('part-to-whole')
+      const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.eyebrow).toBe('part-to-whole')
     })
 
-    it('includes both column names in body', () => {
-      const caption = getPartToWhole().captionFor([catCol, numCol])
-      expect(caption.body).toContain('count')
-      expect(caption.body).toContain('category')
+    it('includes both column names in takeaway', () => {
+      const frame = getPartToWhole().frameFor([catCol, numCol], 'data.csv')
+      expect(frame.takeaway).toContain('count')
+      expect(frame.takeaway).toContain('category')
     })
   })
 })

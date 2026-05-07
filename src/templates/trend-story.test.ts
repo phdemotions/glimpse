@@ -111,23 +111,28 @@ describe('trend-story template', () => {
       expect(x.type).toBe('nominal')
     })
 
-    it('uses infographic dimensions', () => {
+    it('emits chart-only dimensions: full canvas width, sub-canvas height', () => {
       const spec = getTrendStory().specBuilder(sampleData, [dateCol, numCol]) as Record<string, unknown>
       expect(spec.width).toBe(1200)
-      expect(spec.height).toBe(675)
+      expect(spec.height).toBeLessThan(675)
     })
   })
 
-  describe('captionFor', () => {
+  describe('frameFor', () => {
     it('returns eyebrow "trend story"', () => {
-      const caption = getTrendStory().captionFor([dateCol, numCol])
-      expect(caption.eyebrow).toBe('trend story')
+      const frame = getTrendStory().frameFor([dateCol, numCol], 'revenue.csv')
+      expect(frame.eyebrow).toBe('trend story')
     })
 
-    it('includes both column names in body', () => {
-      const caption = getTrendStory().captionFor([dateCol, numCol])
-      expect(caption.body).toContain('revenue')
-      expect(caption.body).toContain('month')
+    it('includes both column names in takeaway', () => {
+      const frame = getTrendStory().frameFor([dateCol, numCol], 'revenue.csv')
+      expect(frame.takeaway).toContain('revenue')
+      expect(frame.takeaway).toContain('month')
+    })
+
+    it('passes the supplied filename through as source', () => {
+      const frame = getTrendStory().frameFor([dateCol, numCol], 'revenue.csv')
+      expect(frame.source).toBe('revenue.csv')
     })
   })
 })
