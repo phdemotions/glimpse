@@ -8,9 +8,7 @@
 
 ## HARD STOP: Visual Approval Required
 
-> **This rule is MANDATORY and overrides all other workflow instructions.**
-
-Any change that affects what the user sees — UI, layout, colors, typography, spacing, icons, animations, copy displayed on screen, component structure, or any other visual output — MUST be presented to the user for approval BEFORE implementation begins.
+Any change that affects what the user sees — UI, layout, colors, typography, spacing, icons, animations, copy displayed on screen, component structure, or any other visual output — is presented to the user for approval before implementation begins. Other workflow rules, the first-impressions rule below included, run after this approval, not instead of it.
 
 ### How to present for approval
 1. **Describe the change** — what will change and why
@@ -18,8 +16,8 @@ Any change that affects what the user sees — UI, layout, colors, typography, s
 3. **Wait for explicit approval** — do not proceed until the user says yes
 4. **If denied** — ask what they would prefer instead
 
-### No exceptions
-Not for "small" changes. Not for "obvious" improvements. Not for refactors that "shouldn't change anything visually." If unsure whether a change is visual, treat it as visual and ask.
+### Scope
+This includes small changes, obvious improvements, and refactors expected to leave the screen unchanged. If unsure whether a change is visual, treat it as visual and ask.
 
 ---
 
@@ -33,7 +31,7 @@ Any work that affects what a new user sees on their first interaction — landin
 4. Speed is part of the impression — first paint <1.5s on cold load
 5. The first chart a user sees should make them feel competent, not lectured
 
-If you identify a first-impression issue during an audit, fix it now. Not later. Not next session. Now.
+A first-impression issue found during an audit is fixed in the same session, once its visual change is approved.
 
 ---
 
@@ -128,7 +126,7 @@ Glimpse follows compound engineering conventions for all planning and solution d
 **Directory structure:**
 - `docs/plans/` — implementation plans, one per CP
 - `docs/plans/PLAN.md` — durable index linking individual CP plan files; contains locked decisions, open questions, risks, working agreements
-- `docs/brainstorms/` — `ce:brainstorm` outputs, naming `YYYY-MM-DD-<topic>-requirements.md`
+- `docs/brainstorms/` — `ce-brainstorm` outputs, naming `YYYY-MM-DD-<topic>-requirements.md`
 - `docs/solutions/` — documented solutions organized by category with YAML frontmatter
 
 **Plan filename:** `YYYY-MM-DD-NNN-<type>-<description>-plan.md`
@@ -144,8 +142,8 @@ date: YYYY-MM-DD
 ```
 
 **Workflow:**
-- New feature or CP — invoke `ce:plan` before implementation
-- Solved problem — invoke `ce:compound` into `docs/solutions/`
+- New feature or CP — invoke `ce-plan` before implementation
+- Solved problem — invoke `ce-compound` into `docs/solutions/`
 - PLAN.md is the index — update the CP table status when a CP ships
 
 ---
@@ -165,7 +163,7 @@ date: YYYY-MM-DD
 - **Data never leaves the browser.** No telemetry of uploaded files. No phone-home requests during processing
 - **No analytics in v1** — not even page-view counters (PLAN.md Decision #28)
 - **No AI summary** — dropped per Decision #21 (CORS prevents browser-direct API calls; would require a backend proxy that breaks the static promise)
-- **First-load assets only.** Self-host fonts in `public/fonts/`. No Google Fonts CDN, no third-party JS
+- **First-load assets only.** Fonts are self-hosted through the `@fontsource-variable` packages, bundled into `dist`. No Google Fonts CDN, no third-party JS
 - **GitHub Pages = static.** No server, no edge functions, no exception
 - **Service worker** caches the app shell so the tool works fully offline after first load. Never caches user file content
 
@@ -175,7 +173,7 @@ Any deviation from this list requires a row in `docs/plans/PLAN.md` locked decis
 
 ## Session Protocol
 
-Start every working session by reading `STATUS.md`, `ISSUES.md`, and `docs/plans/PLAN.md` — in that order. End every working session by updating `STATUS.md` with what was done and what is next.
+Start every working session by reading `STATUS.md`, `ISSUES.md`, and `docs/plans/PLAN.md`. End every working session by updating `STATUS.md` with what was done and what is next.
 
 Use `compound-engineering:ce-plan` for new CPs and `compound-engineering:ce-compound` for documenting solutions.
 
