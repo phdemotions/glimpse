@@ -1,0 +1,6 @@
+# Refuse a Node outside engines.node on install and on `pnpm run`; without this pnpm only warns.
+# Canon: ~/developer/docs/standards/platform-configs.md, rule 3.
+engineStrict: true
+# Resolve no version published in the last 24 hours (in minutes). A locked version still installs.
+# Canon: rule 2, the second gate beside Renovate's 3 days.
+minimumReleaseAge: 1440
